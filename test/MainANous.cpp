@@ -24,21 +24,26 @@ int main(int ac, char **av)
 	fd_set read_fd_set;
 	FD_ZERO(&read_fd_set);
 	FD_SET((unsigned int)socketServer, &read_fd_set);
-struct timeval timeout;
-timeout.tv_sec = 2;
-timeout.tv_usec = 0;
+	struct timeval timeout;
+	timeout.tv_sec = 10;
+	timeout.tv_usec = 0;
 	bind(socketServer, (const struct sockaddr *)&addrServer, sizeof(addrServer));
 	std::cout << "bind: " << socketServer << std::endl;
 
 	listen(socketServer, 10);
 	std::cout << "listening...." << std::endl;
-
+	int socketClient;
 	struct sockaddr_in addrClient;
 	socklen_t cSize = sizeof(addrClient);
-	int socketClient = accept(socketServer, (struct sockaddr *)&addrClient, &cSize);
 	std::cout << "accept" << std::endl;
 	while (1){
-		select(socketServer+1, &read_fd_set, NULL, NULL, &timeout);
+
+		i = select(1024, &read_fd_set, NULL, NULL, &timeout);
+		if (FD_ISSET(socketServer, &read_fd_set))
+
+		// accept(socketServer, (struct sockaddr *)&addrClient, &cSize);
+		if(i == 0)
+			std::cout << "timeout" << std::endl;
 		i = recv(socketClient, &buffer, sizeof(buffer), 0);
 		std::cout << i << "buffer: " << buffer << std::endl;
 		if(!strncmp(buffer, "EXIT", 4))
