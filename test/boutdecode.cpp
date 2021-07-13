@@ -54,7 +54,7 @@ int create_tcp_server_socket(){
 
 
 int main () {
-	fd_set read_fd_set;
+	fd_set read_fd_set, write_fd_set;
 	struct sockaddr_in new_addr;
 	int server_fd, new_fd, ret_val, i;
 	socklen_t addrlen;
@@ -82,10 +82,12 @@ int main () {
 				if(all_connections[i] > max_fd) max_fd = all_connections[i];
 			}
 		}
+		write_fd_set = read_fd_set;
 		/* Invoke select() and then wait! */
 		printf("-----------------------------------------------------------");
 		printf("\nUsing select() to listen for incoming events\n");
-		ret_val = select(max_fd, &read_fd_set, NULL, NULL, NULL);
+		std::cout << max_fd << std::endl;
+		ret_val = select(max_fd + 1, &read_fd_set, NULL, NULL, NULL);
 
 		/* select() woke up. Identify the fd that has events */
 		while (ret_val > 0 ) {
@@ -112,7 +114,6 @@ int main () {
 					/* read incoming data */
 					printf("Returned fd is %d [index, i: %d]\n", all_connections[i], i);
 					fullBuffer.clear();
-					do {
 						//if (fullBuffer.find("\r\n\r\n") != std::string::npos)
 						//	break;
 						ret_val = recv(all_connections[i], buf, DATA_BUFFER, 0);//changer ret_val
@@ -130,8 +131,6 @@ int main () {
 							fullBuffer += buf;
 						}
 						cout << "ret_val = " << ret_val << endl;
-					}
-					while (ret_val > 0);
 					std::cout << buf << std::endl;
 				}
 				ret_val--;
