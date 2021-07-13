@@ -30,7 +30,6 @@ User::~User()
 void Server::addUser(int &fd)
 {
 	User usr(fd);
-	std::cout << fd << std::endl;
 	user[fd] = usr;
 }
 
