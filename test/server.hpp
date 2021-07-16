@@ -1,35 +1,35 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
-#include <map>
-#include <iostream>
-#include <string>
-class User
-{
-    public:
-        User(int fd);
-        User(User &src);
-        User();
-        void setPass(std::string pw);
-        void setNick(std::string nick);
-        ~User();
-        int _fd;
-        std::string _nick;
-        std::string _password;
-};
+# include <map>
+# include <iostream>
+# include <string>
+# include <stdio.h>
+# include <unistd.h>
+# include <cstring>
+# include <iostream>
+# include <stdlib.h>
+# include <sys/ioctl.h>
+# include <sys/socket.h>
+# include <sys/time.h>
+# include <netinet/in.h>
+# include <errno.h>
+# include <fcntl.h>
+# define SERVER_PORT  12345
 
 class Server
 {
     public:
         Server();
         ~Server();
-        void addUser(int &fd);
-        std::map<int, User> user;
-        // void incrUser(void);
-        // void decrUser(void);
+        void setPort(int port);
+        void setPassword(std::string password);
+        void addUser(int fd);
+        void start();
     private:
+        std::map<int, User> _user;
         int _n_user;
         int _port;
-        int _password;
+        std::string _password;
 };
 
 #endif

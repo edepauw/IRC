@@ -1,0 +1,16 @@
+link:
+
+https://openclassrooms.com/fr/courses/1894236-programmez-avec-le-langage-c/1902751-communiquez-en-reseau-avec-son-programme
+http://abcdrfc.free.fr/rfc-vf/rfc1459.html
+https://broux.developpez.com/articles/c/sockets/
+
+
+Pour accepter des connexions, les étapes suivantes sont effectuées :
+
+1. 4 Une socket est créée avec socket(2).
+
+2. La socket est limitée à une adresse locale avec bind(2), ainsi d'autres sockets peuvent y être connect(2)ées.
+
+3. La volonté d'accepter des connexions entrantes et une limite de file pour les connexions entrantes sont spécifiées avec listen().
+
+4. Les connexions sont acceptées avec accept(2).

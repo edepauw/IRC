@@ -1,0 +1,29 @@
+SRCS_NAME		=		main.cpp 	\
+						Server.cpp 	\
+						User.cpp	\
+						
+OBJS			=		${SRCS_NAME:.cpp=.o}
+
+NAME			=		ircserv
+
+RM				=		rm -f
+
+CC				=		clang++
+
+FLAGS			=		-Wall -Wextra -Werror
+
+all:					$(NAME)
+
+%.o: %.cpp				
+	$(CC) $(FLAG) -c $< -o $@
+	
+$(NAME):				$(OBJS)
+	@$(CC) $(FLAGS) $(OBJS) -o $(NAME)
+
+clean:
+	@$(RM) $(OBJS)
+
+fclean:					clean
+	@$(RM) $(NAME)
+
+re:                     fclean all

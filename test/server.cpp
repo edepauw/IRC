@@ -1,43 +1,28 @@
-#include "server.hpp"
+#include "Server.hpp"
 
-Server::Server()
+Server::Server(): _n_user(0), _port(SERVER_PORT)
 {
 
 }
+
 Server::~Server()
 {
 
 }
-// User &Server::getUser(int fd);
-// void Server::incrUser(void);
-// void Server::decrUser(void);
-User::User(int fd): _fd(fd), _nick("*"), _password("")
-{
 
-}
-User::User()
-{
-
-}
-User::~User()
-{
-
-}
-// User::User(int fd): _fd(fd)
-// {
-
-// }
-void Server::addUser(int &fd)
+void Server::addUser(int fd)
 {
 	User usr(fd);
-	user[fd] = usr;
+	_user.insert({fd, usr});
+	_n_user++;
 }
 
-void User::setPass(std::string pw)
+void Server::setPort(int port)
 {
-	_password = pw;
+	_port = port;
 }
-void User::setNick(std::string nick)
+
+void Server::setPassword(std::string password)
 {
-	_nick = nick;
+	_password = password;
 }
