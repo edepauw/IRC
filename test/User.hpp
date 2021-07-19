@@ -5,17 +5,20 @@
 class User
 {
     public:
+        User();
         User(int fd);
         ~User();
-        void        setPass(std::string pw);
-        void        setNick(std::string nick);
+        void setPass(std::string pw);
+        void setNick(std::string nick);
+        void setFd(int fd);       
         std::string getNick(void);
         std::string getPassword(void);
+        int getFd(void);
     private:
-        User();
         int         _fd;
         std::string _nick;
         std::string _password;
+        bool        _oper;
 };
 
 #endif

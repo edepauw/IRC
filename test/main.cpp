@@ -1,34 +1,44 @@
 #include "Server.hpp"
 
-bool only_digit(char *str)
+int port_valid(char *str)
 {
-    for(int i = 0; i < std::strlen(str); ++i)
-    {
-        if (std::isdigit(str[i]) == 0)
-            return false;
-    }
-    return true;
+	int i = 0;
+	int res = 0;
+
+	while (str[i] >= '0' && str[i] <= '9' && res <= 65535)
+	{
+		res = res * 10 + str[i] - 48;
+		i++;
+	}
+    if (str[i] != 0)
+        return -1;
+	return res;
 }
 
-Server get_input(int argc, char **argv)
+int get_input(Server &serv, int argc, char **argv)
 {
-    Server serv();
-    if (argc != 3 || only_digit(argv[1]) == false)
-        throw std::string("./ircserv <port> <password>");
-    serv.setPort(); 65535
+    if (argc != 3)
+    {
+        std::cerr << "./ircserv <port> <password>" << std::endl;
+        return (0);
+    }
+    serv.setPort(port_valid(argv[1]));
+    if (serv.getPort() == -1)
+    {
+        std::cerr << "The port must be between 0 and 65535" << std::endl;
+    }
     serv.setPassword(std::string(argv[2]));
+    std::cout << "Password: " << serv.getPassword() << std::endl; 
+    return (1);
 }
 
 int main(int argc, char **argv)
 {
-    try
-    {
-        get_input(argc, argv);
-    }
-    catch (std::string const& err)
-    {
-        std::cerr << err << std::endl;
-    }
-    Server.start();
+    Server serv;
+    if (!get_input(serv, argc, argv))
+        return (0);
+    serv.init();
+    serv.loop();
+    serv.close_con();
     return (0);
 }

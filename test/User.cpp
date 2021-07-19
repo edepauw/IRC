@@ -5,9 +5,19 @@ User::User(int fd): _fd(fd), _nick("*"), _password("")
 
 }
 
-User::~User()
+User::User(): _fd(-1), _nick("*"), _password("")
 {
 
+}
+
+User::~User()
+{
+    
+}
+
+void User::setFd(int fd)
+{
+    _fd = fd;
 }
 
 void User::setPass(std::string pw)
@@ -28,4 +38,9 @@ std::string User::getNick(void)
 std::string User::getPassword(void)
 {
     return (_password);
+}
+
+int User::getFd(void)
+{
+    return (_fd);
 }
