@@ -68,8 +68,8 @@ void	Server::init(void)
       close(_data.master_socket);
       exit(EXIT_FAILURE);
    }
-   FD_ZERO(&_data.readfds);
-   FD_SET(_data.master_socket, &_data.readfds);
+   FD_ZERO(&_data.m_set);
+   FD_SET(_data.master_socket, &_data.m_set);
    _user[_data.master_socket];
    _data.max_sd = _data.master_socket;
 }
@@ -78,10 +78,13 @@ void Server::loop(void)
 {
    do
    {
+      std::cout << "1" << std::endl;
       this->select_fun();
+      std::cout << "2" << std::endl;
       for (_data.it = _user.begin(); _data.it != _user.end(); _data.it++)
       {
-         if (FD_ISSET(_data.it->first, &_data.readfds)) // masterset[i] = I/O , qui est set via select() plus haut a 1 si le fd a eu de l'activite
+         std::cout << "iterator: " << _data.it->first << std::endl;
+         if (FD_ISSET(_data.it->first, &_data.w_set)) // masterset[i] = I/O , qui est set via select() plus haut a 1 si le fd a eu de l'activite
          {
             //desc_ready -= 1;
             if (_data.it->first == _data.master_socket) // si i == listen_sd, activiter sur le fd du server, soit demande de connection
@@ -91,6 +94,7 @@ void Server::loop(void)
             else // si i != listen_sd, il ne s'agis pas du server mais d'un client_fd en activiter
             {
                this->receive();
+               break;
             }
         }
       }
@@ -99,8 +103,9 @@ void Server::loop(void)
 
 void Server::select_fun(void)
 {
+   memcpy(&_data.w_set, &_data.m_set, sizeof(_data.m_set));
    std::cout << "Waiting on select()..." << std::endl;
-   if ((_data.ret_select = select(_data.max_sd + 1, &_data.readfds, NULL, NULL, NULL)) < 0)
+   if ((_data.ret_select = select(_data.max_sd + 1, &_data.w_set, NULL, NULL, NULL)) < 0)
    {
       perror("  select() failed");
       exit(EXIT_FAILURE);
@@ -117,7 +122,7 @@ void Server::new_connection(void)
       exit(EXIT_FAILURE);
    }
    std::cout << "  New incoming connection - " << _data.new_sd << std::endl;
-   FD_SET(_data.new_sd, &_data.readfds);
+   FD_SET(_data.new_sd, &_data.m_set);
    addUser(_data.new_sd);
    if (_data.new_sd > _data.max_sd)
       _data.max_sd = _data.new_sd;
@@ -134,14 +139,17 @@ void Server::receive(void)
    if (_data.ret_read == 0)
    {
       _user.erase(_data.it->first);
+      std::cout << "Disconnected: " << _data.it->first << std::endl;
       close(_data.it->first);
-      FD_CLR(_data.it->first, &_data.readfds);
+      FD_CLR(_data.it->first, &_data.m_set);
       if (_data.it->first == _data.max_sd)
       {
-         while (FD_ISSET(_data.max_sd, &_data.readfds) == FALSE)
+         while (FD_ISSET(_data.max_sd, &_data.m_set) == FALSE)
             _data.max_sd -= 1;
       }
+      std::cout << "wesh" << std::endl;
    }
+      std::cout << "batard" << std::endl;
    //serv.parseMsg(//i ,buffer, serv);
    //serv.clearBuffer();
 }
@@ -149,6 +157,6 @@ void Server::receive(void)
 void Server::close_con(void)
 {
    for (_data.it = _user.begin(); _data.it != _user.end(); _data.it++)
-      if (FD_ISSET(_data.it->first, &_data.readfds))
+      if (FD_ISSET(_data.it->first, &_data.m_set))
          close(_data.it->first);
 }

@@ -10,7 +10,7 @@ RM				=		rm -f
 
 CC				=		clang++
 
-FLAGS			=		-Wall -Wextra -Werror
+FLAGS			=		-Wall -Wextra -Werror -fsanitize=address
 
 all:					$(NAME)
 

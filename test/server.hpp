@@ -30,7 +30,8 @@ typedef struct s_data
     int                             ret_select;
     int                             ret_read;
     char*                           buffer[1025];
-    fd_set                          readfds;
+    fd_set                          m_set;
+    fd_set                          w_set;
     int                             opt;
     struct timeval                  timeout;
     int                             addrlen;
