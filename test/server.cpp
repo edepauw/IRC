@@ -1,8 +1,8 @@
 #include "Server.hpp"
 
-Server::Server(): _n_user(0)
+Server::Server()
 {
-
+   // _n_user = 0;
 }
 
 Server::~Server()
@@ -14,7 +14,7 @@ void Server::addUser(int fd)
 {
 	User usr(fd);
 	_user[fd] = usr;
-	_n_user++;
+	// _n_user++;
 }
 
 void Server::setPort(int port)
@@ -37,10 +37,9 @@ std::string	Server::getPassword(void)
 	return (_password);
 }
 
-
 void	Server::init(void)
 {  
-   if ((this->_data.master_socket = socket(AF_INET, SOCK_STREAM, 0)) <= 0)
+   if ((this->_data.master_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
    {
       perror("socket() failed");
       exit(EXIT_FAILURE);
@@ -57,7 +56,7 @@ void	Server::init(void)
    _data.addr.sin_addr.s_addr = htonl(INADDR_ANY);
    _data.addr.sin_port        = htons(_port);
    _data.addrlen = sizeof(_data.addr);
-   if(bind(_data.master_socket, reinterpret_cast<struct sockaddr*>(&_data.addr), _data.addrlen) < 0)
+   if (bind(_data.master_socket, reinterpret_cast<struct sockaddr*>(&_data.addr), _data.addrlen) < 0)
    {
       perror("bind() failed");
       close(_data.master_socket);
@@ -77,7 +76,7 @@ void	Server::init(void)
 
 void Server::loop(void)
 {
-    do
+   do
    {
       this->select_fun();
       for (_data.it = _user.begin(); _data.it != _user.end(); _data.it++)
@@ -111,14 +110,14 @@ void Server::select_fun(void)
 
 void Server::new_connection(void)
 {
-   printf("  Listening socket is readable\n");
+   std::cout << "  Listening socket is readable" << std::endl;
    if ((_data.new_sd = accept(_data.master_socket, reinterpret_cast<struct sockaddr *>(&_data.addr), reinterpret_cast<socklen_t *>(&_data.addrlen))) < 0)
    {
       if (errno != EWOULDBLOCK)
          perror("  accept() failed");
       exit(EXIT_FAILURE);
    }
-   printf("  New incoming connection - %d\n", _data.new_sd);
+   std::cout << "  New incoming connection - " << _data.new_sd << std::endl;
    FD_SET(_data.new_sd, &_data.readfds);
    addUser(_data.new_sd);
    if (_data.new_sd > _data.max_sd)
@@ -127,25 +126,25 @@ void Server::new_connection(void)
 
 void Server::receive(void)
 {
-   printf("  Descriptor %d is readable\n", _data.it->first);
-    if((_data.ret_read = recv(_data.it->first, _data.buffer, sizeof(_data.buffer), 0)) < 0)
+   std::cout << "  Descriptor "<< _data.it->first << " is readable" << std::endl;
+   if((_data.ret_read = recv(_data.it->first, _data.buffer, sizeof(_data.buffer), 0)) < 0)
    {
       perror("recv() failed");
       exit(EXIT_FAILURE);
    }
    if (_data.ret_read == 0)
    {
-       _user.erase(_data.it->first);
-       close(_data.it->first);
-       FD_CLR(_data.it->first, &_data.readfds);
-       if (_data.it->first == _data.max_sd)
-       {
-          while (FD_ISSET(_data.max_sd, &_data.readfds) == FALSE)
-             _data.max_sd -= 1;
-       }
+      _user.erase(_data.it->first);
+      close(_data.it->first);
+      FD_CLR(_data.it->first, &_data.readfds);
+      if (_data.it->first == _data.max_sd)
+      {
+         while (FD_ISSET(_data.max_sd, &_data.readfds) == FALSE)
+            _data.max_sd -= 1;
+      }
    }
-    //serv.parseMsg(//i ,buffer, serv);
-    //serv.clearBuffer();
+   //serv.parseMsg(//i ,buffer, serv);
+   //serv.clearBuffer();
 }
 
 void Server::close_con(void)

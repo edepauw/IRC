@@ -24,20 +24,21 @@
 
 typedef struct s_data
 {
-    struct sockaddr_in   addr;
-    int                  master_socket;
-    int                  new_sd;
-    int                  ret_select;
-    int                  ret_read;
-    char*                buffer[1025];
-    fd_set               readfds;
-    int                  opt;
-    struct timeval       timeout;
-    int                  addrlen;
-    int                  max_sd;
-    std::map<int, User>::iterator it;
+    struct sockaddr_in              addr;
+    int                             master_socket;
+    int                             new_sd;
+    int                             ret_select;
+    int                             ret_read;
+    char*                           buffer[1025];
+    fd_set                          readfds;
+    int                             opt;
+    struct timeval                  timeout;
+    int                             addrlen;
+    int                             max_sd;
+    std::map<int, User>::iterator   it;
 
     s_data(){opt = TRUE;};
+
 }               t_data;
 
 class Server
@@ -61,7 +62,7 @@ class Server
     private:
         std::map<int, User>                     _user;
         std::map<std::string, std::list<int> >  _chan;
-        int                                     _n_user;
+        //int                                     _n_user;
         int                                     _port;
         std::string                             _password;
         t_data                                  _data;
@@ -70,9 +71,6 @@ class Server
         void new_connection(void);
         void receive(void);
         void select_fun(void);
-
-    protected:
-
 };
 
 #endif
