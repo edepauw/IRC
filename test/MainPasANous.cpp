@@ -73,45 +73,7 @@ int new_connection(int &listen_sd, fd_set &master_set, Server &serv)
    return(new_sd);
 }
 
-int   init_server(int port)
-{
-   int                  listen_sd;
-   struct sockaddr_in   addr;
-   int                  on = 1;
-   int                  rc;
-   struct timeval       timeout;
-   if ((listen_sd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-   {
-      perror("socket() failed");
-      exit(-1);
-   }
-   if (setsockopt(listen_sd, SOL_SOCKET,  SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-   {
-      perror("setsockopt() failed");
-      close(listen_sd);
-      exit(-1);
-   }
-   fcntl(listen_sd, F_SETFL, O_NONBLOCK);
-   memset(&addr, 0, sizeof(addr));
-   addr.sin_family      = AF_INET;
-   addr.sin_addr.s_addr = htonl(INADDR_ANY);
-   addr.sin_port        = htons(port);
-   rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
-   if (rc < 0)
-   {
-      perror("bind() failed");
-      close(listen_sd);
-      exit(-1);
-   }
-   rc = listen(listen_sd, 32);
-   if (rc < 0)
-   {
-      perror("listen() failed");
-      close(listen_sd);
-      exit(-1);
-   }
-   return (listen_sd); 
-}
+
 
 int main (int argc, char *argv[])
 {
@@ -123,9 +85,7 @@ int main (int argc, char *argv[])
    int    close_conn;
    char   buffer[80] = {0};
    listen_sd = init_server(atoi(argv[1]));
-   FD_ZERO(&master_set);
-   FD_SET(listen_sd, &master_set);
-   max_sd = listen_sd;
+   
    do
    {
       memcpy(&working_set, &master_set, sizeof(master_set));

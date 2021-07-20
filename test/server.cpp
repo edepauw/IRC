@@ -94,18 +94,17 @@ void Server::loop(void)
             }
         }
       }
-
-    } while (TRUE);
+   } while (TRUE);
 }
 
 void Server::select_fun(void)
 {
    std::cout << "Waiting on select()..." << std::endl;
-      if ((_data.ret_select = select(_data.max_sd + 1, &_data.readfds, NULL, NULL, NULL)) < 0)
-      {
-         perror("  select() failed");
-         exit(EXIT_FAILURE);
-      }
+   if ((_data.ret_select = select(_data.max_sd + 1, &_data.readfds, NULL, NULL, NULL)) < 0)
+   {
+      perror("  select() failed");
+      exit(EXIT_FAILURE);
+   }
 }
 
 void Server::new_connection(void)
