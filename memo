@@ -14,3 +14,16 @@ Pour accepter des connexions, les étapes suivantes sont effectuées :
 3. La volonté d'accepter des connexions entrantes et une limite de file pour les connexions entrantes sont spécifiées avec listen().
 
 4. Les connexions sont acceptées avec accept(2).
+
+Weechat:
+
+https://weechat.org/files/doc/devel/weechat_user.fr.html#irc_plugin
+
+
+/server add irc 127.0.0.1/8888 // Add un server a weechat
+/connect irc
+
+/set irc.server.irc.password <password>  // Set le password de la connection
+/set irc.server.irc.username <username> // Set l'username
+/set irc.server.irc.realname <realname> // Set le realname
+/NICK <nickname> // Set nickname

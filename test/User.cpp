@@ -44,3 +44,18 @@ int User::getFd(void)
 {
     return (_fd);
 }
+
+std::string User::getCmd(void)
+{
+    return (_cmd);
+}
+
+void User::addCmd(std::string str)
+{
+    _cmd += str;
+}
+
+void User::resetCmd(void)
+{
+    _cmd.clear();
+}

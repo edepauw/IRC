@@ -1,6 +1,7 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 # include <map>
+# include <vector>
 # include <list>
 # include <iostream>
 # include <string>
@@ -19,8 +20,9 @@
 # include <netinet/in.h>
 # include "User.hpp"
 
-#define TRUE 1
-#define FALSE 0
+# define TRUE 1
+# define FALSE 0
+# define PASS_OPE 1234
 
 typedef struct s_data
 {
@@ -29,7 +31,7 @@ typedef struct s_data
     int                             new_sd;
     int                             ret_select;
     int                             ret_read;
-    char*                           buffer[1025];
+    char                            buffer[512];
     fd_set                          m_set;
     fd_set                          w_set;
     int                             opt;
@@ -55,15 +57,23 @@ class Server
         int         getPort(void);
         std::string getPassword(void);
 
-
+        // Server
         void init(void);
         void loop(void);
+
+        // Command
+        std::vector<std::string> cutMsg(std::string cmd);
+        void parseMsg(void);
+        void pass(std::vector<std::string> &args);
+        void nick(std::vector<std::string> &args);
+        void user(std::vector<std::string> &args);
+
+        // Close
         void close_con(void);
 
     private:
         std::map<int, User>                     _user;
         std::map<std::string, std::list<int> >  _chan;
-        //int                                     _n_user;
         int                                     _port;
         std::string                             _password;
         t_data                                  _data;

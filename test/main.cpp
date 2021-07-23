@@ -26,6 +26,7 @@ int get_input(Server &serv, int argc, char **argv)
     if (serv.getPort() == -1)
     {
         std::cerr << "The port must be between 0 and 65535" << std::endl;
+        return (0);
     }
     serv.setPassword(std::string(argv[2]));
     std::cout << "Password: " << serv.getPassword() << std::endl; 
