@@ -3,10 +3,10 @@
 # include <map>
 # include <vector>
 # include <list>
-# include <iostream>
 # include <string>
 # include <cstring>
 # include <iostream>
+# include <iomanip>
 # include <stdlib.h>
 # include <stdio.h>
 # include <unistd.h>
@@ -23,6 +23,7 @@
 # define TRUE 1
 # define FALSE 0
 # define PASS_OPE 1234
+# define SERVER_NAME "ft_irc.com"
 
 typedef struct s_data
 {

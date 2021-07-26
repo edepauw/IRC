@@ -1,39 +1,29 @@
 #include "Server.hpp"
 
-Server::Server()
-{
+// Class
 
-}
+Server::Server(){ }
 
-Server::~Server()
-{
+Server::~Server(){ }
 
-}
+// Setter
+
+void Server::setPort( int port ){ _port = port; }
+
+void Server::setPassword( std::string password ){ _password = password; }
+
+// Getter
+
+int Server::getPort(void){ return (_port); }
+
+std::string	Server::getPassword( void ){ return (_password); }
+
+// Method
 
 void Server::addUser(int fd)
 {
 	User usr(fd);
 	_user[fd] = usr;
-}
-
-void Server::setPort(int port)
-{
-	_port = port;
-}
-
-void Server::setPassword(std::string password)
-{
-	_password = password;
-}
-
-int	Server::getPort(void)
-{
-	return (_port);
-}
-
-std::string	Server::getPassword(void)
-{
-	return (_password);
 }
 
 void	Server::init(void)
@@ -117,7 +107,7 @@ void Server::new_connection(void)
          perror("  accept() failed");
       exit(EXIT_FAILURE);
    }
-   std::cout << "  New incoming connection - " << _data.new_sd << std::endl;
+   std::cout << "  New incoming connection [ " << _data.new_sd << " ]" << std::endl;
    FD_SET(_data.new_sd, &_data.m_set);
    addUser(_data.new_sd);
    if (_data.new_sd > _data.max_sd)
@@ -184,7 +174,15 @@ void Server::pass(std::vector<std::string> &args)
 {
    //serv.user[fd]._password = buff;
    std::cout << "message PASS received from" << std::endl;
+   std::string resp;
+   /*if (args.size() == 1)
+      resp += ":irc 461 alidy PASS :Not enough parameters\n";
+   else if (_user[_data.it->first].)
 
+   else
+*/
+   send(_data.it->first , resp.c_str(), resp.length(), 0);
+   
    /*461 ERR_NEEDMOREPARAMS
 "<commande> :Not enough parameters"
 
