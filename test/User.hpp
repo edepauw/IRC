@@ -9,13 +9,18 @@ class User
         User(int fd);
         ~User();
     
+        void setNickName(std::string nick);
+        void setUserName(std::string user);
+        void setRealName(std::string real);
         void setPass(std::string pw);
-        void setNick(std::string nick);
         void setFd(int fd);  
 
-        std::string getNick(void);
+        std::string getNickName(void);
+        std::string getUserName(void);
+        std::string getRealName(void);
         std::string getPassword(void);
         std::string getCmd(void);
+        bool isOper(void);
         int getFd(void);
 
         void addCmd(std::string str);
@@ -23,7 +28,9 @@ class User
 
     private:
         int         _fd;
-        std::string _nick;
+        std::string _nickName;
+        std::string _userName;
+        std::string _realName;
         std::string _password;
         bool        _oper;
         std::string _cmd;

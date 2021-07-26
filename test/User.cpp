@@ -1,61 +1,41 @@
 #include "User.hpp"
 
-User::User(int fd): _fd(fd), _nick("*"), _password("")
-{
 
-}
+// Class
 
-User::User(): _fd(-1), _nick("*"), _password("")
-{
+User::User(int fd): _fd(fd){ }
 
-}
+User::User(): _fd(-1){ }
 
-User::~User()
-{
-    
-}
+User::~User(){ }
 
-void User::setFd(int fd)
-{
-    _fd = fd;
-}
 
-void User::setPass(std::string pw)
-{
-	_password = pw;
-}
+// Setter
 
-void User::setNick(std::string nick)
-{
-	_nick = nick;
-}
+void User::setFd( int fd ){ _fd = fd; }
 
-std::string User::getNick(void)
-{
-    return (_nick);
-}
+void User::setPass( std::string pw ){ _password = pw; }
 
-std::string User::getPassword(void)
-{
-    return (_password);
-}
+void User::setNickName( std::string nick ){ _nickName = nick; }
 
-int User::getFd(void)
-{
-    return (_fd);
-}
+void User::setUserName( std::string user ){ _userName = user; }
 
-std::string User::getCmd(void)
-{
-    return (_cmd);
-}
+// Getter
 
-void User::addCmd(std::string str)
-{
-    _cmd += str;
-}
+std::string User::getNickName( void ){ return (_nickName); }
 
-void User::resetCmd(void)
-{
-    _cmd.clear();
-}
+std::string User::getUserName( void ){ return (_userName); }
+
+std::string User::getPassword( void ){ return (_password); }
+
+bool User::isOper( void ){ return (_oper); }
+
+int User::getFd( void ){ return (_fd); }
+
+std::string User::getCmd(void){ return (_cmd); }
+
+// Method
+
+void User::addCmd( std::string str ){ _cmd += str; }
+
+void User::resetCmd( void ){ _cmd.clear(); }
