@@ -170,50 +170,81 @@ std::vector<std::string> Server::cutMsg(std::string cmd)
    return (args);
 }
 
+std::string Server::response(std::string num, std::string resp)
+{
+   std::string res(":");
+
+   res += SERVER_NAME;
+   res += " ";
+   res += num;
+   if (!_user[_data.it->first].getNickName().empty()) // PASS ?
+   {
+      res += " ";
+      res += _user[_data.it->first].getNickName();
+   }
+   res += " ";
+   res += resp;
+   res += "\n";
+   return res;
+}
+
 void Server::pass(std::vector<std::string> &args)
 {
-   //serv.user[fd]._password = buff;
-   std::cout << "message PASS received from" << std::endl;
    std::string resp;
-   /*if (args.size() == 1)
-      resp += ":irc 461 alidy PASS :Not enough parameters\n";
-   else if (_user[_data.it->first].)
-
+   if (args.size() == 1)
+      resp = response("461", "PASS :Not enough parameters");
+   else if (!_user[_data.it->first].getUserName().empty()) // UserName n'est set que si le client est co
+      resp = response("462", ":You may not reregister");
+   if (!resp.empty())
+      send(_data.it->first , resp.c_str(), resp.length(), 0);
    else
-*/
-   send(_data.it->first , resp.c_str(), resp.length(), 0);
-   
-   /*461 ERR_NEEDMOREPARAMS
-"<commande> :Not enough parameters"
-
-462 ERR_ALREADYREGISTRED
-":You may not reregister"*/
+      _user[_data.it->first].setPassword(args[1]);
 }
 
 void Server::nick(std::vector<std::string> &args)
 {
-   //serv.user[fd]._nick = buff;
-   std::cout << "Nickname :" << std::endl;
-   /*431 ERR_NONICKNAMEGIVEN
-":No nickname given"
-Renvoyé quand un paramètre pseudonyme attendu pour une commande n'est pas fourni.
+   std::string resp;
 
-432 ERR_ERRONEUSNICKNAME
-"<pseudo> :Erroneus nickname"
-Renvoyé après la réception d'un message NICK qui contient des caractères qui ne font pas partie du jeu autorisé. Voir les sections 1 et 2.2 pour les détails des pseudonymes valides.
-
-433 ERR_NICKNAMEINUSE
-"<nick> :Nickname is already in use"
-Renvoyé quand le traitement d'un message NICK résulte en une tentative de changer de pseudonyme en un déjà existant.
-
-436 ERR_NICKCOLLISION
-"<nick> :Nickname collision KILL"*/
+   if (args.size() == 1)
+   {
+      resp = response("431", ":No nickname given");
+   }
+   else if (args[1].size() > 8) // A check les conditions
+   {
+      resp = response("432", args[1] + " :Erroneus nickname");
+   }
+   else
+   {
+      for (std::map<int, User>::iterator it = _user.begin(); it != _user.end(); ++it)
+      {
+         if (!it->second.getNickName().compare(args[1]))
+            resp = response("433", it->second.getNickName() + " :Nickname is already in use");
+      }
+   }
+   if (!resp.empty())
+      send(_data.it->first , resp.c_str(), resp.length(), 0);
+   else
+      _user[_data.it->first].setNickName(args[1]);
 }
 
 void Server::user(std::vector<std::string> &args)
 {
-   std::cout << "message USER received from : fd :" << _data.it->first <<std::endl;
-   std::string resp = ":irc 001 alidy :Welcome to our FT_IRC project !\n";
+   std::string resp;
+   if (args.size() < 5) // Gerer si trop ???? (impossible puisque realname doit etre avec :)
+      resp = response("461", "USER :Not enough parameters");
+   else if (!_user[_data.it->first].getUserName().empty()) // UserName n'est set que si le client est co
+      resp = response("462", ":You may not reregister");
+   else if (_user[_data.it->first].getPassword() != this->getPassword())
+      resp = response("Error", ":Bad password"); // Voir ce qu'il faut renvoyer
+   else if (_user[_data.it->first].getNickName().empty())
+      resp = response("Error", ":Nick require");  // Voir ce qu'il faut renvoyer
+   // Faut il check si userName est deja pris comme Nick ?
+   else
+   {
+      _user[_data.it->first].setUserName(args[1]);
+      _user[_data.it->first].setRealName(args[4]);
+      resp = response("001", ":Welcome to the Internet Relay Network");
+   }
    send(_data.it->first , resp.c_str(), resp.length(), 0);
 }
 

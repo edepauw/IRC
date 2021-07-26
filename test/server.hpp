@@ -48,19 +48,23 @@ typedef struct s_data
 class Server
 {
     public:
+        // Class
         Server();
         ~Server();
 
+        // Setter
         void setPort(int port);
         void setPassword(std::string password);
-        void addUser(int fd);
 
+        // Getter
         int         getPort(void);
         std::string getPassword(void);
 
-        // Server
+        // Method
+        void addUser(int fd);
         void init(void);
         void loop(void);
+        std::string response(std::string num, std::string resp);
 
         // Command
         std::vector<std::string> cutMsg(std::string cmd);

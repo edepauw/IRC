@@ -12,7 +12,7 @@ class User
         void setNickName(std::string nick);
         void setUserName(std::string user);
         void setRealName(std::string real);
-        void setPass(std::string pw);
+        void setPassword(std::string pw);
         void setFd(int fd);  
 
         std::string getNickName(void);

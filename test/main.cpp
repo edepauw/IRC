@@ -29,9 +29,9 @@ int get_input(Server &serv, int argc, char **argv)
         return (0);
     }
     serv.setPassword(std::string(argv[2]));
-    std::cout << "Server Name: " << SERVER_NAME << std::endl;
-    std::cout << "Password: " << serv.getPassword() << std::endl;
-    std::cout << "Password operator: " << PASS_OPE << std::endl;
+    std::cout << "| Server   Name     : " << SERVER_NAME << std::endl;
+    std::cout << "| Server   Password : " << serv.getPassword() << std::endl;
+    std::cout << "| Operator Password : " << PASS_OPE  << std::endl << std::endl;
     return (1);
 }
 

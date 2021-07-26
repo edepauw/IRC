@@ -3,9 +3,9 @@
 
 // Class
 
-User::User(int fd): _fd(fd){ }
-
 User::User(): _fd(-1){ }
+
+User::User(int fd): _fd(fd){ }
 
 User::~User(){ }
 
@@ -14,11 +14,14 @@ User::~User(){ }
 
 void User::setFd( int fd ){ _fd = fd; }
 
-void User::setPass( std::string pw ){ _password = pw; }
+void User::setPassword( std::string pw ){ _password = pw; }
 
 void User::setNickName( std::string nick ){ _nickName = nick; }
 
 void User::setUserName( std::string user ){ _userName = user; }
+
+void User::setRealName( std::string user ){ _realName = user; }
+
 
 // Getter
 
@@ -27,6 +30,8 @@ std::string User::getNickName( void ){ return (_nickName); }
 std::string User::getUserName( void ){ return (_userName); }
 
 std::string User::getPassword( void ){ return (_password); }
+
+std::string User::getRealName( void ){ return (_realName); }
 
 bool User::isOper( void ){ return (_oper); }
 

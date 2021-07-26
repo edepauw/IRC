@@ -27,3 +27,9 @@ https://weechat.org/files/doc/devel/weechat_user.fr.html#irc_plugin
 /set irc.server.irc.username <username> // Set l'username
 /set irc.server.irc.realname <realname> // Set le realname
 /NICK <nickname> // Set nickname
+
+
+TO DO:
+
+Faut il gerer quand il y a plus de parametres que prevu ? ex: NICK test1  blabla
+Regarder pour gerer les :
