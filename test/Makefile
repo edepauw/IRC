@@ -1,6 +1,6 @@
 SRCS_NAME		=		main.cpp 	\
-						Server.cpp 	\
-						User.cpp	\
+						server.cpp 	\
+						user.cpp	\
 						
 OBJS			=		${SRCS_NAME:.cpp=.o}
 

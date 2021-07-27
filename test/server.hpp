@@ -18,7 +18,7 @@
 # include <sys/select.h>
 # include <sys/time.h>
 # include <netinet/in.h>
-# include "User.hpp"
+# include "user.hpp"
 
 # define TRUE 1
 # define FALSE 0
@@ -72,6 +72,7 @@ class Server
         void pass(std::vector<std::string> &args);
         void nick(std::vector<std::string> &args);
         void user(std::vector<std::string> &args);
+        void join(std::vector<std::string> &args);
 
         // Close
         void close_con(void);

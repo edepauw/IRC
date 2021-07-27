@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "server.hpp"
 
 // Class
 
@@ -248,20 +248,70 @@ void Server::user(std::vector<std::string> &args)
    send(_data.it->first , resp.c_str(), resp.length(), 0);
 }
 
+void showVector(std::vector<std::string> args)
+{
+   std::vector<std::string>::iterator it;
+   for (it = args.begin(); it != args.end(); it++)
+   {
+      std::cout << *it << std::endl;
+   }
+   return;
+}
+
+std::list<std::string> isChannel(std::string str)
+{
+   std::list<std::string> temp;
+   int pos = 0;
+   if(str.find(',') == std::string::npos && (str[0] == '#'  ||  str[0] == '&') && str.length() > 1)
+   {
+      temp.push_back(str);
+      return (temp);
+   }
+   while((pos = str.find(',')) != std::string::npos)
+   { 
+      if (str[0] != '#'  &&  str[0] != '&')
+         return temp;
+      temp.push_back((str.substr(0, pos)));
+      str.erase(0, pos + 1);
+   }
+   if (str[0] != '#'  &&  str[0] != '&')
+         return temp;
+   temp.push_back((str.substr(0, pos)));
+   str.erase(0, pos);
+   return (temp);
+}
+
+void Server::join(std::vector<std::string> &args)
+{
+   std::list<std::string> temp;
+   std::list<std::string>::iterator tit;
+   std::vector<std::string>::iterator it;
+   showVector(args);
+   if (args[1].length() > 0)
+      temp = isChannel(args[1]);
+   for (tit = temp.begin(); tit != temp.end(); tit++)
+   {
+      std::cout << "list :" << *tit << std::endl;
+   }
+   
+}
+
 void Server::parseMsg()
 {
 	void (Server::*ptr[])(std::vector<std::string> &args) =
    {
       &Server::pass,
       &Server::nick,
-      &Server::user
+      &Server::user,
+      &Server::join
    };
 
    std::string _name[] =
    {
       "PASS",
       "NICK",
-      "USER"
+      "USER",
+      "JOIN"
    };
 
    _data.buffer[_data.ret_read] = 0;
@@ -273,7 +323,7 @@ void Server::parseMsg()
       std::vector<std::string> args;
       args = this->cutMsg(_user[_data.it->first].getCmd());
       _user[_data.it->first].resetCmd();
-      for (int i = 0; i < 3; i++)
+      for (int i = 0; i < 4; i++)
       {
          if (!args.empty() && !args[0].compare(0, _name[i].length(), _name[i]))
          {
