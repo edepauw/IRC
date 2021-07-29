@@ -81,7 +81,7 @@ class Server
 
         // Close
         void disconnect( void );
-        void close_con(void);
+        void closeServer(void);
 
     private:
         std::map<int, User>                     _user;
@@ -91,9 +91,11 @@ class Server
         t_data                                  _data;
 
         void clearBuffer(void);
-        void new_connection(void);
+        void newConnection(void);
         void receive(void);
-        void select_fun(void);
+        void selectFun(void);
+		// Debug
+		void showVector(std::vector<std::string> args);
 };
 
 #endif
