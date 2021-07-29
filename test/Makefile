@@ -1,6 +1,7 @@
 SRCS_NAME		=		main.cpp 	\
-						server.cpp 	\
-						user.cpp	\
+						Server.cpp 	\
+						User.cpp	\
+						Channel.cpp	\
 						
 OBJS			=		${SRCS_NAME:.cpp=.o}
 

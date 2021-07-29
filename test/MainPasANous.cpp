@@ -9,7 +9,7 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "server.hpp"
+#include "Server.hpp"
 
 #define SERVER_PORT  12345
 

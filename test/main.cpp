@@ -1,4 +1,4 @@
-#include "server.hpp"
+#include "Server.hpp"
 
 int port_valid(char *str)
 {
