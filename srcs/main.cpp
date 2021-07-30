@@ -42,6 +42,6 @@ int main(int argc, char **argv)
         return (0);
     serv.init();
     serv.loop();
-    serv.closeServer();
+    serv.closeServer(); // USELESS
     return (0);
 }

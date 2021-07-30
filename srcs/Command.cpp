@@ -11,11 +11,11 @@ std::vector<std::string> Server::cutMsg(std::string cmd)
    int i = 0;
    int stop = 0;
    bool doublefind = 0;
-   if (s[0] == ':') // Pour le prefix
+   if (s[0] == ':')
    {
       while (s[i] != ' ' && s[i] != '\n')
          ++i;
-      s.erase(std::remove(s.begin(), s.end(), '\r'), s.end()); //erase \r, to work with netcat or irc client
+      s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
       args.push_back(s.substr(0, i));
    }
    while (s[i] != '\n')
@@ -28,7 +28,7 @@ std::vector<std::string> Server::cutMsg(std::string cmd)
       stop = i;
       if (s.substr(start, stop - start).length() != 0)
       {
-         s.erase(std::remove(s.begin(), s.end(), '\r'), s.end()); //erase \r, to work with netcat or irc client
+         s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
          args.push_back(s.substr(start, stop - start));
       }
       if (s[i] == ':')
@@ -48,7 +48,7 @@ void Server::pass(std::vector<std::string> &args)
    std::string resp;
    if (args.size() == 1)
       resp = response("461", "PASS :Not enough parameters");
-   else if (!_user[_data.it->first].getUserName().empty()) // UserName n'est set que si le client est co
+   else if (!_user[_data.it->first].getUserName().empty())
       resp = response("462", ":You may not reregister");
    if (!resp.empty())
       send(_data.it->first , resp.c_str(), resp.length(), 0);
@@ -64,10 +64,6 @@ void Server::nick(std::vector<std::string> &args)
    {
       resp = response("431", ":No nickname given");
    }
-   /*else if (args[1].size() > 8) // A check les conditions
-   {
-      resp = response("432", args[1] + " :Erroneus nickname");
-   }*/
    else
    {
       for (std::map<int, User>::iterator it = _user.begin(); it != _user.end(); ++it)
@@ -86,15 +82,14 @@ void Server::user(std::vector<std::string> &args)
 {
    std::string resp;
    
-   if (args.size() < 5) // Gerer si trop ???? (impossible puisque realname doit etre avec :)
+   if (args.size() < 5)
       resp = response("461", "USER :Not enough parameters");
-   else if (!_user[_data.it->first].getUserName().empty()) // UserName n'est set que si le client est co
+   else if (!_user[_data.it->first].getUserName().empty())
       resp = response("462", ":You may not reregister");
    else if (_user[_data.it->first].getPassword() != this->getPassword())
       resp = response("464", ":Password incorrect");
    else if (_user[_data.it->first].getNickName().empty())
-      resp = response("420", ":Nick require");  // Voir ce qu'il faut renvoyer
-   // Faut il check si userName est deja pris comme Nick ?
+      resp = response("420", ":Nick require");
    else
    {
       _user[_data.it->first].setUserName(args[1]);
@@ -190,13 +185,12 @@ void	Server::printUserAndTopic(std::string chan_name){
 	//list of user
 	std::map<int, User>::iterator it;
 	std::string resp1 = chan_name + " :";
-	for (it = _user.begin(); it != _user.end(); it++){
-		if (_chan[chan_name].isOpe(it->first)){
+	for (it = _user.begin(); it != _user.end(); it++)
+   {
+		if (_chan[chan_name].isOpe(it->first))
 			resp1 += " @" + it->second.getNickName();
-		}
-		else if (_chan[chan_name].isFd(it->first)){
+		else if (_chan[chan_name].isFd(it->first))
 			resp1 += " " + it->second.getNickName();
-		}
 	}
 	std::string resp2 = response("353", resp1);
 	send(_data.it->first , resp2.c_str(), resp2.length(), 0);
@@ -212,9 +206,10 @@ void Server::join(std::vector<std::string> &args)
    if (args.size() > 1)
       if (args[1].length() > 0)
          channel = isChannel(args[1]);
-	if (channel.empty() == true){
+	if (channel.empty() == true)
+   {
 		std::string resp = response("403", " :No such channel");
-        send(_data.it->first , resp.c_str(), resp.length(), 0);
+      send(_data.it->first , resp.c_str(), resp.length(), 0);
 	}
    if (args.size() > 2)
       if (args[2].length() > 0)
@@ -238,7 +233,7 @@ void Server::parseMsg()
    {
       &Server::pass,
       &Server::nick,
-      &Server::user,
+      &Server::user
    };
 
    std::string _con[] =
@@ -251,15 +246,17 @@ void Server::parseMsg()
    void (Server::*cmd[])(std::vector<std::string> &args) =
    {
       &Server::join,
-	  &Server::oper,
-	  &Server::privMsg,
+	   &Server::oper,
+	   &Server::privMsg,
+      &Server::quit
    };
 
    std::string _cmd[] =
    {
       "JOIN",
-	  "OPER",
-	  "PRIVMSG",
+	   "OPER",
+	   "PRIVMSG",
+      "QUIT"
    };
 
    _data.buffer[_data.ret_read] = 0;
@@ -276,11 +273,7 @@ void Server::parseMsg()
       if (args[0][0] == ':') 
       {
          if (args[0].length() == 1 || args[0].compare(1, args[0].length(), _user[_data.it->first].getNickName()) != 0) // A VOIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIR
-         { 
-            
-            std::cout << "BAD NICK" << std::endl;
             return;
-         }
          else
             args.erase(args.begin());
       }
@@ -292,7 +285,7 @@ void Server::parseMsg()
             return;
          }
       }
-      for (int i = 0; i < 3; i++)
+      for (int i = 0; i < 4; i++)
       {
          if (_user[_data.it->first].getUserName().empty())
          {
@@ -312,23 +305,24 @@ void Server::parseMsg()
 
 void Server::oper(std::vector<std::string> &args){
 	int fd = getFd_ByName(args[1]);
-	if (_user[fd].isOper() == false){
-		if (args[2] == PASS_OPE){	
+	if (_user[fd].isOper() == false)
+   {
+		if (args[2] == PASS_OPE)
+      {	
 			_user[fd].setOper(true);
 			std::string resp(response("381", ":You are now an IRC operator"));
-            send(_data.it->first , resp.c_str(), resp.length(), 0);
+         send(_data.it->first , resp.c_str(), resp.length(), 0);
 		}
-		else{
+		else
+      {
 			std::string resp(response("464", ":Password incorrect"));
-            send(_data.it->first , resp.c_str(), resp.length(), 0);
+         send(_data.it->first , resp.c_str(), resp.length(), 0);
 		}
 	}
 	//TODO: send all 
 }
 
-void Server::setBanFromServ(std::string channel, int fd){
-	_chan[channel].setBan(fd);
-}
+void Server::setBanFromServ(std::string channel, int fd){ _chan[channel].setBan(fd); }
 
 std::vector<std::string> cutPrivMsg(std::string str)
 {
@@ -395,4 +389,29 @@ void Server::privMsg(std::vector<std::string> &args)
       if (_user.find(getFd_ByName(*it)) != _user.end())
          send(getFd_ByName(*it) , msg.c_str(), msg.length(), 0);
    }
+}
+
+void Server::quit(std::vector<std::string> &args)
+{
+   std::string message = _user[_data.it->first].getNickName() + " has quit IRC";
+   if (args.size() > 1)
+      message += " " + args[1];
+   else
+      message += "\n";
+   for (std::map<std::string, Channel>::iterator it =  _chan.begin(); it != _chan.end(); it++)
+   {
+      std::list<int>::iterator itt = std::find(it->second.getUser().begin(), it->second.getUser().end(), _data.it->first);
+      if (itt != it->second.getUser().end())
+      {
+         for (std::list<int>::iterator ite = it->second.getUser().begin(); ite != it->second.getUser().end(); ite++)
+         {
+            if (ite != itt)
+               send(*ite, message.c_str(), message.length(), 0);
+         }
+         it->second.removeUser(*itt);
+      }
+   }
+   std::cout << _data.it->first << std::endl;
+   /*if (FD_ISSET(_data.it->first, &_data.m_set)) Besoin de close la connexion mais casse le serv
+      close(_data.it->first);*/
 }

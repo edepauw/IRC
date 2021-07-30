@@ -25,7 +25,7 @@
 # define FALSE 0
 # define PASS_OPE "1234"
 # define SERVER_NAME "ft_irc.com"
-# define MAX_ON_CHAN 2
+# define MAX_ON_CHAN 5
 
 class Channel;
 
@@ -84,6 +84,7 @@ class Server
 		void printUserAndTopic(std::string chan_name);
 		void oper(std::vector<std::string> &args);
 		void privMsg(std::vector<std::string> &args);
+        void quit(std::vector<std::string> &args);
 
         // Close
         void disconnect( void );
