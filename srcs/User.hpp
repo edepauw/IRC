@@ -21,6 +21,7 @@ class User
         std::string getPassword(void);
         std::string getCmd(void);
         bool isOper(void);
+		void setOper(bool n);
         int getFd(void);
 
         void addCmd(std::string str);

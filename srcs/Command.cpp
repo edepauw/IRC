@@ -146,6 +146,7 @@ std::vector<std::string> isChannel(std::string str)
    str.erase(0, pos);
    return (temp);
 }
+
 void Server::createOrJoinWithPass(std::string chan_name, std::string password)
 {
    int fd = _data.it->first;
@@ -158,11 +159,10 @@ void Server::createOrJoinWithPass(std::string chan_name, std::string password)
          _chan[chan_name].setPass(password);
       _chan[chan_name].setName(chan_name);
       std::cout << "Create channel : " << chan_name << std::endl;
-	  //TODO: print
+	  printUserAndTopic(chan_name);
    }
    else
    {
-
     	if (_chan[chan_name].getPass() != password){
         	std::string resp = response("475", chan_name + " :Cannot join channel (+k)");
         	send(_data.it->first , resp.c_str(), resp.length(), 0);
@@ -178,23 +178,29 @@ void Server::createOrJoinWithPass(std::string chan_name, std::string password)
 			}
     	  	else
     	  	   std::cout << "Join channel : " << chan_name << std::endl;
-			////TODO: print
-			//printUserAndTopic(chan_name);
+			printUserAndTopic(chan_name);
     	}
    }
 }
 
-//void	Server::printUserAndTopic(std::string chan_name){
-//	//Topic
-//	std::string resp = response("331", chan_name + " :No topic is set");
-//    send(_data.it->first , resp.c_str(), resp.length(), 0);
-//	//list of user
-//	std::map<int, User>::iterator it;
-//	for (it = _user.begin(); it != _user.end(); it++){
-//		std::cout << std::endl;
-//	}
-//
-//}
+void	Server::printUserAndTopic(std::string chan_name){
+	//Topic
+	std::string resp = response("331", chan_name + " :No topic is set");
+	send(_data.it->first , resp.c_str(), resp.length(), 0);
+	//list of user
+	std::map<int, User>::iterator it;
+	std::string resp1 = chan_name + " :";
+	for (it = _user.begin(); it != _user.end(); it++){
+		if (_chan[chan_name].isOpe(it->first)){
+			resp1 += " @" + it->second.getNickName();
+		}
+		else if (_chan[chan_name].isFd(it->first)){
+			resp1 += " " + it->second.getNickName();
+		}
+	}
+	std::string resp2 = response("353", resp1);
+	send(_data.it->first , resp2.c_str(), resp2.length(), 0);
+}
 
 void Server::join(std::vector<std::string> &args)
 {
@@ -203,7 +209,6 @@ void Server::join(std::vector<std::string> &args)
    std::vector<std::string>::iterator chan_it;
    std::vector<std::string>::iterator pass_it;
    std::vector<std::string>::iterator it;
-   // showVector(args);
    if (args.size() > 1)
       if (args[1].length() > 0)
          channel = isChannel(args[1]);
@@ -220,9 +225,10 @@ void Server::join(std::vector<std::string> &args)
    pass_it = passw.begin();
    while (chan_it != channel.end())
    {
-      createOrJoinWithPass(*chan_it, *pass_it);
-      chan_it++;
-      pass_it++;
+	   	if (chan_it->length() > 1)
+    		createOrJoinWithPass(*chan_it, *pass_it);
+    	chan_it++;
+    	pass_it++;
    }
 }
 
@@ -244,12 +250,16 @@ void Server::parseMsg()
 
    void (Server::*cmd[])(std::vector<std::string> &args) =
    {
-      &Server::join
+      &Server::join,
+	  &Server::oper,
+	  &Server::privMsg,
    };
 
    std::string _cmd[] =
    {
-      "JOIN"
+      "JOIN",
+	  "OPER",
+	  "PRIVMSG",
    };
 
    _data.buffer[_data.ret_read] = 0;
@@ -282,7 +292,7 @@ void Server::parseMsg()
             return;
          }
       }
-      for (int i = 0; i < 1; i++)
+      for (int i = 0; i < 3; i++)
       {
          if (_user[_data.it->first].getUserName().empty())
          {
@@ -300,6 +310,89 @@ void Server::parseMsg()
    }
 }
 
+void Server::oper(std::vector<std::string> &args){
+	int fd = getFd_ByName(args[1]);
+	if (_user[fd].isOper() == false){
+		if (args[2] == PASS_OPE){	
+			_user[fd].setOper(true);
+			std::string resp(response("381", ":You are now an IRC operator"));
+            send(_data.it->first , resp.c_str(), resp.length(), 0);
+		}
+		else{
+			std::string resp(response("464", ":Password incorrect"));
+            send(_data.it->first , resp.c_str(), resp.length(), 0);
+		}
+	}
+	//TODO: send all 
+}
+
 void Server::setBanFromServ(std::string channel, int fd){
 	_chan[channel].setBan(fd);
+}
+
+std::vector<std::string> cutPrivMsg(std::string str)
+{
+   std::vector<std::string> temp;
+   int pos = 0;
+   if(str.find(',') == std::string::npos && str.length() > 1)
+   {
+      temp.push_back(str);
+      return (temp);
+   }
+   while((pos = str.find(',')) != std::string::npos)
+   {
+      temp.push_back((str.substr(0, pos)));
+      str.erase(0, pos + 1);
+   }
+   temp.push_back((str.substr(0, pos)));
+   str.erase(0, pos);
+   return (temp);
+}
+
+
+std::string getMessage(std::vector<std::string> &args)
+{
+   std::vector<std::string>::iterator args_it;
+   std::string msg;
+   for (args_it = args.begin(); args_it != args.end(); args_it++)
+   {
+      msg += *args_it;
+      msg += " ";
+   }
+   if (msg.find(":"))
+      msg = msg.substr(msg.find(":") + 1, msg.length() - msg.find(":") + 1);
+   else
+      msg = msg.substr(msg.find_last_of(" ") + 1, msg.length() - msg.find_last_of(" ") + 1);
+   return msg;
+}
+
+void Server::privMsg(std::vector<std::string> &args)
+{
+   std::vector<std::string> user;
+   std::vector<std::string> all;
+   std::vector<std::string> chan;
+   std::vector<std::string>::iterator it;
+   std::string msg;
+   std::string cur;
+   //x = cutby ',' args[1]
+   all = cutPrivMsg(args[1]);
+   msg = getMessage(args);
+   for (it = all.begin(); it != all.end(); it++)
+   {
+      cur = *it;
+      if ((cur[0] == '#' || cur[0] == '&' )&& cur.length() > 1)
+         chan.push_back(cur);
+      else if (cur.length() > 1)
+         user.push_back(cur);
+   }
+   for(it = chan.begin(); it != chan.end(); it++)
+   {
+      if (_chan.find(*it) != _chan.end())
+         _chan.find(*it)->second.sendAll(msg);
+   }
+   for(it = user.begin(); it != user.end(); it++)
+   {
+      if (_user.find(getFd_ByName(*it)) != _user.end())
+         send(getFd_ByName(*it) , msg.c_str(), msg.length(), 0);
+   }
 }

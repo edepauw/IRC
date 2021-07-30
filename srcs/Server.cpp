@@ -165,3 +165,12 @@ void Server::showVector(std::vector<std::string> args)
    }
    return;
 }
+
+int	Server::getFd_ByName(std::string name){
+	std::map<int, User>::iterator it;
+	for (it = _user.begin(); it != _user.end(); it++){
+		if (it->second.getNickName() == name)
+			return it->first;
+	}
+	return -1;
+}

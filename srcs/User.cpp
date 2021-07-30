@@ -24,6 +24,13 @@ void User::setUserName( std::string user ){ _userName = user; }
 
 void User::setRealName( std::string user ){ _realName = user; }
 
+void User::setOper( bool n ){
+	if (n == true)
+		_oper = true;
+	else
+		_oper = false;
+}
+
 
 // Getter
 

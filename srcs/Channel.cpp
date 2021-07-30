@@ -30,6 +30,24 @@ void        Channel::setPass(std::string pw)
     _passw = pw;
 }
 
+bool	Channel::isFd(int fd){
+	std::list<int>::iterator it;
+	for (it = _userFd.begin(); it != _userFd.end(); it++){
+		if (*it == fd)
+			return true;
+	}
+	return false;
+}
+
+bool	Channel::isOpe(int fd){
+	std::list<int>::iterator it;
+	for (it = _operFd.begin(); it != _operFd.end(); it++){
+		if (*it == fd)
+			return true;
+	}
+	return false;
+}
+
 void        Channel::setName(std::string name)
 {
     _name = name;
@@ -111,10 +129,22 @@ bool		Channel::isBanned(int fd){
 			if (*it == fd)
 				return true;
 		return false;
-	};
+}
+
 void		Channel::setBan(int fd){
 	if (isBanned(fd) == false)
 		_banFd.push_back(fd);
 	else
 		std::cout << fd << " : is already ban" << std::endl;
+}
+
+void        Channel::sendAll(std::string str)
+{
+    int fd;
+    std::list<int>::iterator it;
+    for (it = _userFd.begin(); it != _userFd.end(); it++)
+    {
+        fd = *it;
+        send(fd , str.c_str(), str.length(), 0);
+    }
 }

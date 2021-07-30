@@ -23,7 +23,7 @@
 
 # define TRUE 1
 # define FALSE 0
-# define PASS_OPE 1234
+# define PASS_OPE "1234"
 # define SERVER_NAME "ft_irc.com"
 # define MAX_ON_CHAN 2
 
@@ -44,6 +44,7 @@ typedef struct s_data
     int                             addrlen;
     int                             max_sd;
     std::map<int, User>::iterator   it;
+	std::map<std::string, Channel>	itc;
 
     s_data(){opt = TRUE;};
 
@@ -63,6 +64,7 @@ class Server
         // Getter
         int         getPort(void);
         std::string getPassword(void);
+		int			getFd_ByName(std::string name);
 
         // Method
         void addUser(int fd);
@@ -79,7 +81,9 @@ class Server
         void user(std::vector<std::string> &args);
         void join(std::vector<std::string> &args);
 		void setBanFromServ(std::string channel, int fd);
-		//void printUserAndTopic(std::string chan_name);
+		void printUserAndTopic(std::string chan_name);
+		void oper(std::vector<std::string> &args);
+		void privMsg(std::vector<std::string> &args);
 
         // Close
         void disconnect( void );
