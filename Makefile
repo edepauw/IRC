@@ -1,7 +1,9 @@
-SRCS_NAME		=		main.cpp 	\
-						Server.cpp 	\
-						User.cpp	\
-						Channel.cpp	\
+SRCS_NAME		=		srcs/main.cpp 	\
+						srcs/Server.cpp 	\
+						srcs/User.cpp	\
+						srcs/Channel.cpp	\
+						srcs/Command.cpp	\
+						srcs/Close.cpp	\
 						
 OBJS			=		${SRCS_NAME:.cpp=.o}
 

@@ -25,7 +25,7 @@
 # define FALSE 0
 # define PASS_OPE 1234
 # define SERVER_NAME "ft_irc.com"
-
+# define MAX_ON_CHAN 2
 
 class Channel;
 
@@ -78,6 +78,8 @@ class Server
         void createOrJoinWithPass(std::string chan_name, std::string password);
         void user(std::vector<std::string> &args);
         void join(std::vector<std::string> &args);
+		void setBanFromServ(std::string channel, int fd);
+		//void printUserAndTopic(std::string chan_name);
 
         // Close
         void disconnect( void );

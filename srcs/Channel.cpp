@@ -34,6 +34,7 @@ void        Channel::setName(std::string name)
 {
     _name = name;
 }
+
 int Channel::size()
 {
     std::list<int>::iterator it;
@@ -43,14 +44,47 @@ int Channel::size()
     }
     return (ret);
 }
+
+std::list<int> & Channel::getUser()
+{
+    return _userFd;
+}
+
+std::list<int> & Channel::getOper()
+{
+    return _operFd;
+}
+
+std::ostream &operator<<(std::ostream &os, Channel &src)
+{
+    std::list<int>::iterator it;
+    os << "_userFd : " << std::endl;
+    for (it = src.getUser().begin(); it != src.getUser().end(); it++)
+        os << *it << std::endl;
+    //os << "_operFd : " << std::endl;
+    //for (it = src.getOper().begin(); it != src.getOper().end(); it++)
+    //    os << *it << std::endl;
+	return os;
+}
+
 int Channel::addUser(int fd){
     std::list<int>::iterator it;
-    for (it = _userFd.begin(); it != _userFd.end(); it++){
+	int ret = 0;
+	if (_userFd.size() < MAX_ON_CHAN)
+    {
+		for (it = _userFd.begin(); it != _userFd.end(); it++){
         if (*it == fd)
-            return 1;
-    }
-     _userFd.push_back(fd);
-     return 0;
+            ret = 1;
+			break;
+   		}
+		_userFd.insert(_userFd.begin(), fd);
+     	//_userFd.push_back(fd);
+     	ret = 0;
+		std::cout << *this << std::endl;
+		return ret;
+	}
+	std::cout << *this << std::endl;
+	return 2;
 }
 
 int Channel::addOper(int fd){
@@ -69,4 +103,18 @@ std::string Channel::getName(){
 
 std::string Channel::getPass(){
     return _passw;
+}
+
+bool		Channel::isBanned(int fd){
+		std::list<int>::iterator it;
+		for (it = _banFd.begin(); it != _banFd.end(); it++)
+			if (*it == fd)
+				return true;
+		return false;
+	};
+void		Channel::setBan(int fd){
+	if (isBanned(fd) == false)
+		_banFd.push_back(fd);
+	else
+		std::cout << fd << " : is already ban" << std::endl;
 }

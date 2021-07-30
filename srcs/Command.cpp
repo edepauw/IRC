@@ -93,7 +93,7 @@ void Server::user(std::vector<std::string> &args)
    else if (_user[_data.it->first].getPassword() != this->getPassword())
       resp = response("464", ":Password incorrect");
    else if (_user[_data.it->first].getNickName().empty())
-      resp = response("Error", ":Nick require");  // Voir ce qu'il faut renvoyer
+      resp = response("420", ":Nick require");  // Voir ce qu'il faut renvoyer
    // Faut il check si userName est deja pris comme Nick ?
    else
    {
@@ -158,21 +158,43 @@ void Server::createOrJoinWithPass(std::string chan_name, std::string password)
          _chan[chan_name].setPass(password);
       _chan[chan_name].setName(chan_name);
       std::cout << "Create channel : " << chan_name << std::endl;
+	  //TODO: print
    }
    else
    {
 
-      if (_chan[chan_name].getPass() != password)
-         std::cout << "Bad password" << std::endl;
-      else
-      {
-         if (_chan[chan_name].addUser(fd))
-            std::cout << "Already connected to channel : " << chan_name << std::endl;
-         else
-            std::cout << "Join channel : " << chan_name << std::endl;
-      }
+    	if (_chan[chan_name].getPass() != password){
+        	std::string resp = response("475", chan_name + " :Cannot join channel (+k)");
+        	send(_data.it->first , resp.c_str(), resp.length(), 0);
+		}
+    	else
+    	{
+		  int ret = _chan[chan_name].addUser(fd);
+    	  	if (ret == 1)
+    	  	   std::cout << "Already connected to channel : " << chan_name << std::endl;
+			else if (ret == 2){
+    	  	   std::string resp = response("471", chan_name + " :Cannot join channel (+l)");
+    	         send(_data.it->first , resp.c_str(), resp.length(), 0);
+			}
+    	  	else
+    	  	   std::cout << "Join channel : " << chan_name << std::endl;
+			////TODO: print
+			//printUserAndTopic(chan_name);
+    	}
    }
 }
+
+//void	Server::printUserAndTopic(std::string chan_name){
+//	//Topic
+//	std::string resp = response("331", chan_name + " :No topic is set");
+//    send(_data.it->first , resp.c_str(), resp.length(), 0);
+//	//list of user
+//	std::map<int, User>::iterator it;
+//	for (it = _user.begin(); it != _user.end(); it++){
+//		std::cout << std::endl;
+//	}
+//
+//}
 
 void Server::join(std::vector<std::string> &args)
 {
@@ -185,6 +207,10 @@ void Server::join(std::vector<std::string> &args)
    if (args.size() > 1)
       if (args[1].length() > 0)
          channel = isChannel(args[1]);
+	if (channel.empty() == true){
+		std::string resp = response("403", " :No such channel");
+        send(_data.it->first , resp.c_str(), resp.length(), 0);
+	}
    if (args.size() > 2)
       if (args[2].length() > 0)
          passw = isPass(args[2]);
@@ -228,7 +254,8 @@ void Server::parseMsg()
 
    _data.buffer[_data.ret_read] = 0;
    _user[_data.it->first].addCmd(_data.buffer);
-   std::cout << "Commande du client: " << "'" << _user[_data.it->first].getCmd() << "'" << std::endl;
+   if (_user[_data.it->first].getCmd().length() != 0)
+		std::cout << "Commande du client: " << "'" << _user[_data.it->first].getCmd() << "'" << std::endl;
    if (_data.buffer[_data.ret_read - 1] == '\n') // Si la commande est terminée
    {
       std::vector<std::string> args;
@@ -271,4 +298,8 @@ void Server::parseMsg()
       }
       std::cout << "Commande non trouvée !" << std::endl;
    }
+}
+
+void Server::setBanFromServ(std::string channel, int fd){
+	_chan[channel].setBan(fd);
 }

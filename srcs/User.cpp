@@ -7,7 +7,9 @@ User::User(): _fd(-1){ }
 
 User::User(int fd): _fd(fd){ }
 
-User::~User(){ }
+User::~User(){
+	std::cout << "User " << _fd << ": has been deleted" << std::endl;
+}
 
 
 // Setter

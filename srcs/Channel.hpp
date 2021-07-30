@@ -20,14 +20,21 @@ class Channel{
     void        setName(std::string str);
     void        setBool(bool b);
     int         size();
+	bool		isBanned(int fd);
+	void		setBan(int fd);
+
+	std::list<int> & getUser();
+	std::list<int> & getOper();
 
     private:
-    std::list<int>    _userFd;
-    std::list<int>    _operFd;
-    std::string        _name;
-    std::string        _passw;
-    bool            _boolPw;
+    std::list<int>		_userFd;
+    std::list<int>		_operFd;
+	std::list<int>		_banFd; 
+    std::string        	_name;
+    std::string        	_passw;
+    bool            	_boolPw;
 
 };
+std::ostream &operator<<(std::ostream &os, Channel &src);
 
 #endif
