@@ -68,9 +68,8 @@ int Channel::size()
 {
     std::list<int>::iterator it;
     int ret = 0;
-    for (it = _userFd.begin(); it != _userFd.end(); it++){
+    for (it = _userFd.begin(); it != _userFd.end(); it++)
         ret++;
-    }
     return (ret);
 }
 

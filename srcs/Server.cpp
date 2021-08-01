@@ -141,19 +141,34 @@ void Server::receive(void)
 std::string Server::response(std::string num, std::string resp)
 {
    std::string res(":");
-
    res += SERVER_NAME;
    res += " ";
    res += num;
+   res += " ";
    if (!_user[_data.it->first].getNickName().empty()) // PASS ?
    {
-      res += " ";
       res += _user[_data.it->first].getNickName();
+      res += " ";
    }
-   res += " ";
    res += resp;
    res += "\n";
    return res;
+}
+
+std::string Server::sendMessage(std::string cmd, std::string dest, std::string msg)
+{
+   std::string mes(":");  // <servername> | <nick> [ '!' <user> ] [ '@' <host> ]
+   mes += _user[_data.it->first].getNickName();
+   mes += "!";
+   mes += _user[_data.it->first].getUserName();
+   mes += "@IPhost ";
+   mes += cmd;
+   mes += " ";
+   mes += dest;
+   mes += " :";
+   mes += msg;
+   mes += "\n";
+   return (mes);
 }
 
 void Server::showVector(std::vector<std::string> args)

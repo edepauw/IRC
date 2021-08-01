@@ -61,9 +61,7 @@ void Server::nick(std::vector<std::string> &args)
    std::string resp;
 
    if (args.size() == 1)
-   {
       resp = response("431", ":No nickname given");
-   }
    else
    {
       for (std::map<int, User>::iterator it = _user.begin(); it != _user.end(); ++it)
@@ -154,11 +152,15 @@ void Server::createOrJoinWithPass(std::string chan_name, std::string password)
          _chan[chan_name].setPass(password);
       _chan[chan_name].setName(chan_name);
       std::cout << "Create channel : " << chan_name << std::endl;
+      if (password != "")
+         std::cout << "With mdr :" << password;
 	  printUserAndTopic(chan_name);
    }
    else
    {
-    	if (_chan[chan_name].getPass() != password){
+    	if (_chan[chan_name].getPass() != password)
+      {
+         std::cout << "'" << _chan[chan_name].getPass() << "' TRUE: '" << password << std::endl;
         	std::string resp = response("475", chan_name + " :Cannot join channel (+k)");
         	send(_data.it->first , resp.c_str(), resp.length(), 0);
 		}
@@ -221,7 +223,7 @@ void Server::join(std::vector<std::string> &args)
    while (chan_it != channel.end())
    {
 	   	if (chan_it->length() > 1)
-    		createOrJoinWithPass(*chan_it, *pass_it);
+    		   createOrJoinWithPass(*chan_it, *pass_it);
     	chan_it++;
     	pass_it++;
    }
@@ -272,7 +274,7 @@ void Server::parseMsg()
          return;
       if (args[0][0] == ':') 
       {
-         if (args[0].length() == 1 || args[0].compare(1, args[0].length(), _user[_data.it->first].getNickName()) != 0) // A VOIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIR
+         if (args[0].length() == 1 || args[0].compare(1, args[0].length(), _user[_data.it->first].getNickName()) != 0)
             return;
          else
             args.erase(args.begin());
@@ -299,27 +301,29 @@ void Server::parseMsg()
             return;
          }
       }
-      std::cout << "Commande non trouvée !" << std::endl;
+      std::string resp(response("421", args[0] + " :Unknown command"));
+      send(_data.it->first , resp.c_str(), resp.length(), 0);
    }
 }
 
 void Server::oper(std::vector<std::string> &args){
 	int fd = getFd_ByName(args[1]);
-	if (_user[fd].isOper() == false)
+   std::string resp;
+   if (fd == - 1)
+      resp = response("401", args[1] + " :No such nick");
+	else if (_user[fd].isOper() == false)
    {
-		if (args[2] == PASS_OPE)
+      if (args.size() == 1)
+         resp = response("461", "OPER :Not enough parameters");
+		else if (args[2] == PASS_OPE)
       {	
 			_user[fd].setOper(true);
-			std::string resp(response("381", ":You are now an IRC operator"));
-         send(_data.it->first , resp.c_str(), resp.length(), 0);
+			resp = response("381", ":You are now an IRC operator");
 		}
 		else
-      {
-			std::string resp(response("464", ":Password incorrect"));
-         send(_data.it->first , resp.c_str(), resp.length(), 0);
-		}
+			resp = response("464", ":Password incorrect");
 	}
-	//TODO: send all 
+   send(_data.it->first , resp.c_str(), resp.length(), 0);
 }
 
 void Server::setBanFromServ(std::string channel, int fd){ _chan[channel].setBan(fd); }
@@ -370,7 +374,7 @@ void Server::privMsg(std::vector<std::string> &args)
    std::string cur;
    //x = cutby ',' args[1]
    all = cutPrivMsg(args[1]);
-   msg = getMessage(args);
+   msg = args[2];
    for (it = all.begin(); it != all.end(); it++)
    {
       cur = *it;
@@ -379,25 +383,24 @@ void Server::privMsg(std::vector<std::string> &args)
       else if (cur.length() > 1)
          user.push_back(cur);
    }
-   for(it = chan.begin(); it != chan.end(); it++)
+   for (it = chan.begin(); it != chan.end(); it++)
    {
       if (_chan.find(*it) != _chan.end())
-         _chan.find(*it)->second.sendAll(msg);
+         _chan.find(*it)->second.sendAll(sendMessage("PRIVMSG", _chan.find(*it)->first, msg));
    }
-   for(it = user.begin(); it != user.end(); it++)
+   for (it = user.begin(); it != user.end(); it++)
    {
       if (_user.find(getFd_ByName(*it)) != _user.end())
-         send(getFd_ByName(*it) , msg.c_str(), msg.length(), 0);
+         send(getFd_ByName(*it) , sendMessage("PRIVMSG", *it, msg).c_str(), sendMessage("PRIVMSG", *it, msg).length(), 0);
    }
 }
 
 void Server::quit(std::vector<std::string> &args)
 {
-   std::string message = _user[_data.it->first].getNickName() + " has quit IRC";
+   std::string resp;
    if (args.size() > 1)
-      message += " " + args[1];
-   else
-      message += "\n";
+      resp += " " + args[1];
+   std::string message = response("001", " :has quit IRC" + resp);
    for (std::map<std::string, Channel>::iterator it =  _chan.begin(); it != _chan.end(); it++)
    {
       std::list<int>::iterator itt = std::find(it->second.getUser().begin(), it->second.getUser().end(), _data.it->first);
@@ -411,7 +414,22 @@ void Server::quit(std::vector<std::string> &args)
          it->second.removeUser(*itt);
       }
    }
-   std::cout << _data.it->first << std::endl;
-   /*if (FD_ISSET(_data.it->first, &_data.m_set)) Besoin de close la connexion mais casse le serv
-      close(_data.it->first);*/
+   close(_data.it->first);
+   FD_CLR(_data.it->first, &_data.m_set);
+}
+
+void Server::kill(std::vector<std::string> &args)
+{
+   int fd = getFd_ByName(args[1]);
+   std::string resp;
+   if (_user[_data.it->first].isOper() == false)
+      resp = response("481", ":Permission Denied- You're not an IRC operator");
+   else if (fd == - 1)
+      resp = response("401", args[1] + " :No such nick");
+   else if (args.size() < 3)
+      resp = response("461", "KILL :Not enough parameters");
+   for (std::map<std::string, Channel>::iterator it =  _chan.begin(); it != _chan.end(); it++)
+      it->second.removeUser(_data.it->first);
+   close(_data.it->first);
+   FD_CLR(_data.it->first, &_data.m_set);
 }
