@@ -7,7 +7,7 @@ Channel::Channel(void): _passw("")
 
 Channel::~Channel(void)
 {
-    std::cout << "channel : " << _name << " deleted" << std::endl;
+
 }
 
 int Channel::removeUser(int fd)

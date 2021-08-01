@@ -80,7 +80,7 @@ void Server::user(std::vector<std::string> &args)
 {
    std::string resp;
    
-   if (args.size() < 5)
+  if (args.size() < 5)
       resp = response("461", "USER :Not enough parameters");
    else if (!_user[_data.it->first].getUserName().empty())
       resp = response("462", ":You may not reregister");
@@ -93,7 +93,7 @@ void Server::user(std::vector<std::string> &args)
       _user[_data.it->first].setUserName(args[1]);
       _user[_data.it->first].setRealName(args[4]);
       std::cout << _user[_data.it->first].getRealName() << std::endl;
-      resp = response("001", ":Welcome to the Internet Relay Network");
+      resp = response("000", ":Welcome to the Internet Relay Network");
    }
    send(_data.it->first , resp.c_str(), resp.length(), 0);
 }
@@ -169,7 +169,8 @@ void Server::createOrJoinWithPass(std::string chan_name, std::string password)
 		  int ret = _chan[chan_name].addUser(fd);
     	  	if (ret == 1)
     	  	   std::cout << "Already connected to channel : " << chan_name << std::endl;
-			else if (ret == 2){
+			else if (ret == 2)
+         {
     	  	   std::string resp = response("471", chan_name + " :Cannot join channel (+l)");
     	         send(_data.it->first , resp.c_str(), resp.length(), 0);
 			}
@@ -195,7 +196,7 @@ void	Server::printUserAndTopic(std::string chan_name){
 			resp1 += " " + it->second.getNickName();
 	}
 	std::string resp2 = response("353", resp1);
-	send(_data.it->first , resp2.c_str(), resp2.length(), 0);
+	send(_data.it->first , sendMessage("JOIN", "", chan_name).c_str(), sendMessage("JOIN", "", chan_name).length(), 0);
 }
 
 void Server::join(std::vector<std::string> &args)
@@ -250,7 +251,8 @@ void Server::parseMsg()
       &Server::join,
 	   &Server::oper,
 	   &Server::privMsg,
-      &Server::quit
+      &Server::quit,
+      &Server::notice
    };
 
    std::string _cmd[] =
@@ -258,7 +260,8 @@ void Server::parseMsg()
       "JOIN",
 	   "OPER",
 	   "PRIVMSG",
-      "QUIT"
+      "QUIT",
+      "NOTICE"
    };
 
    _data.buffer[_data.ret_read] = 0;
@@ -287,7 +290,7 @@ void Server::parseMsg()
             return;
          }
       }
-      for (int i = 0; i < 4; i++)
+      for (int i = 0; i < 5; i++)
       {
          if (_user[_data.it->first].getUserName().empty())
          {
@@ -374,6 +377,8 @@ void Server::privMsg(std::vector<std::string> &args)
    std::string cur;
    //x = cutby ',' args[1]
    all = cutPrivMsg(args[1]);
+   if (args.size() < 2) // ERRO
+      return;
    msg = args[2];
    for (it = all.begin(); it != all.end(); it++)
    {
@@ -401,6 +406,7 @@ void Server::quit(std::vector<std::string> &args)
    if (args.size() > 1)
       resp += " " + args[1];
    std::string message = response("001", " :has quit IRC" + resp);
+   //sendMessage("QUIT", *it, " :has quit IRC")
    for (std::map<std::string, Channel>::iterator it =  _chan.begin(); it != _chan.end(); it++)
    {
       std::list<int>::iterator itt = std::find(it->second.getUser().begin(), it->second.getUser().end(), _data.it->first);
@@ -423,13 +429,48 @@ void Server::kill(std::vector<std::string> &args)
    int fd = getFd_ByName(args[1]);
    std::string resp;
    if (_user[_data.it->first].isOper() == false)
+      //sendMessage("PRIVMSG", *it, msg).c_str(), sendMessage("PRIVMSG", *it, msg).length(), 0);
       resp = response("481", ":Permission Denied- You're not an IRC operator");
-   else if (fd == - 1)
-      resp = response("401", args[1] + " :No such nick");
    else if (args.size() < 3)
       resp = response("461", "KILL :Not enough parameters");
-   for (std::map<std::string, Channel>::iterator it =  _chan.begin(); it != _chan.end(); it++)
-      it->second.removeUser(_data.it->first);
-   close(_data.it->first);
-   FD_CLR(_data.it->first, &_data.m_set);
+   else if (fd == - 1)
+      resp = response("401", args[1] + " :No such nick");
+   if (resp.empty())
+      send(_data.it->first, resp.c_str(), resp.length(), 0);
+   else
+   {
+      for (std::map<std::string, Channel>::iterator it =  _chan.begin(); it != _chan.end(); it++)
+         it->second.removeUser(_data.it->first);
+      close(_data.it->first);
+      FD_CLR(_data.it->first, &_data.m_set);
+   }
 }
+
+void Server::notice(std::vector<std::string> &args)
+{
+   if (args.size() > 2)
+      if (getFd_ByName(args[1]) > 0)
+         send(getFd_ByName(args[1]) , sendMessage("NOTICE", args[1], args[2]).c_str(), sendMessage("PRIVMSG", args[1], args[2]).length(), 0);
+}
+
+/*void Server::kick(std::vector<std::string> &args)
+{
+   std::string resp;
+   int fdName = getFd_ByName(args[1]);
+   std::string chan = args[2];
+
+   if (args.size() < 3)
+      resp = response("461", "KICK :Not enough parameters");
+   else if (fd == - 1)
+      resp = response("401", args[1] + " :No such channel");
+   
+              403 ERR_NOSUCHCHANNEL
+"<nom de canal> :No such channel"
+                            
+          442 ERR_NOTONCHANNEL
+"<canal> :You're not on that channel"
+
+482 ERR_CHANOPRIVSNEEDED
+"<canal> :You're not channel operator"
+
+}*/

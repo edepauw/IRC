@@ -164,7 +164,11 @@ std::string Server::sendMessage(std::string cmd, std::string dest, std::string m
    mes += "@IPhost ";
    mes += cmd;
    mes += " ";
-   mes += dest;
+   if (dest.empty() == false)
+   {
+      mes += " ";
+      mes += dest;
+   }
    mes += " :";
    mes += msg;
    mes += "\n";

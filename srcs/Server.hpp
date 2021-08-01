@@ -37,6 +37,7 @@ typedef struct s_data
     int                             ret_select;
     int                             ret_read;
     char                            buffer[512];
+    std::string                     strbuff;
     fd_set                          m_set;
     fd_set                          w_set;
     int                             opt;
@@ -44,7 +45,7 @@ typedef struct s_data
     int                             addrlen;
     int                             max_sd;
     std::map<int, User>::iterator   it;
-	std::map<std::string, Channel>	itc;
+    std::map<std::string, Channel>    itc;
 
     s_data(){opt = TRUE;};
 
@@ -87,6 +88,8 @@ class Server
 		void privMsg(std::vector<std::string> &args);
         void quit(std::vector<std::string> &args);
         void kill(std::vector<std::string> &args);
+        void notice(std::vector<std::string> &args);
+        void kick(std::vector<std::string> &args);
 
         // Close
         void disconnect( void );
