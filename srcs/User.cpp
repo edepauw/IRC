@@ -9,7 +9,7 @@ User::User(int fd): _fd(fd){ }
 
 User::~User()
 {
-	std::cout << "User " << _fd << ": has been deleted" << std::endl;
+	//std::cout << "User " << _fd << ": has been deleted" << std::endl;
 }
 
 

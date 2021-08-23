@@ -151,7 +151,7 @@ std::string Server::response(std::string num, std::string resp)
       res += " ";
    }
    res += resp;
-   res += "\n";
+   res += "\r\n";
    return res;
 }
 
@@ -169,9 +169,12 @@ std::string Server::sendMessage(std::string cmd, std::string dest, std::string m
       mes += " ";
       mes += dest;
    }
-   mes += " :";
-   mes += msg;
-   mes += "\n";
+   if (msg != "")
+   {
+      mes += " :";
+      mes += msg;
+   }
+   mes += "\r\n";
    return (mes);
 }
 

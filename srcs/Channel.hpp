@@ -7,8 +7,8 @@ class Channel{
 
     public:
     //constructor and destructor
-        Channel(void);
-        ~Channel(void);
+    Channel(void);
+    ~Channel(void);
     //Getter and Setter
     int    removeUser(int fd);
     int    addUser(int fd);

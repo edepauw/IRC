@@ -93,7 +93,7 @@ void Server::user(std::vector<std::string> &args)
       _user[_data.it->first].setUserName(args[1]);
       _user[_data.it->first].setRealName(args[4]);
       std::cout << _user[_data.it->first].getRealName() << std::endl;
-      resp = response("000", ":Welcome to the Internet Relay Network");
+      resp = response("001", ":Welcome to the Internet Relay Network");
    }
    send(_data.it->first , resp.c_str(), resp.length(), 0);
 }
@@ -143,7 +143,7 @@ std::vector<std::string> isChannel(std::string str)
 void Server::createOrJoinWithPass(std::string chan_name, std::string password)
 {
    int fd = _data.it->first;
-   if( _chan.find(chan_name) == _chan.end())
+   if (_chan.find(chan_name) == _chan.end())
    {
       _chan[chan_name];
       _chan[chan_name].addUser(fd);
@@ -154,7 +154,7 @@ void Server::createOrJoinWithPass(std::string chan_name, std::string password)
       std::cout << "Create channel : " << chan_name << std::endl;
       if (password != "")
          std::cout << "With mdr :" << password;
-	  printUserAndTopic(chan_name);
+	   printUserAndTopic(chan_name);
    }
    else
    {
@@ -166,17 +166,19 @@ void Server::createOrJoinWithPass(std::string chan_name, std::string password)
 		}
     	else
     	{
-		  int ret = _chan[chan_name].addUser(fd);
+		   int ret = _chan[chan_name].addUser(fd);
     	  	if (ret == 1)
     	  	   std::cout << "Already connected to channel : " << chan_name << std::endl;
 			else if (ret == 2)
          {
     	  	   std::string resp = response("471", chan_name + " :Cannot join channel (+l)");
-    	         send(_data.it->first , resp.c_str(), resp.length(), 0);
+    	      send(_data.it->first , resp.c_str(), resp.length(), 0);
 			}
     	  	else
     	  	   std::cout << "Join channel : " << chan_name << std::endl;
-			printUserAndTopic(chan_name);
+			
+         _chan[chan_name].sendAll(sendMessage("JOIN", _chan[chan_name].getName(), ""));
+         printUserAndTopic(chan_name);
     	}
    }
 }
@@ -186,17 +188,24 @@ void	Server::printUserAndTopic(std::string chan_name){
 	std::string resp = response("331", chan_name + " :No topic is set");
 	send(_data.it->first , resp.c_str(), resp.length(), 0);
 	//list of user
-	std::map<int, User>::iterator it;
+	std::list<int>::iterator it;
 	std::string resp1 = chan_name + " :";
-	for (it = _user.begin(); it != _user.end(); it++)
+	for (it = _chan[chan_name].getUser().begin(); it != _chan[chan_name].getUser().end(); it++)
    {
-		if (_chan[chan_name].isOpe(it->first))
-			resp1 += " @" + it->second.getNickName();
-		else if (_chan[chan_name].isFd(it->first))
-			resp1 += " " + it->second.getNickName();
+		if (_chan[chan_name].isOpe(*it))
+      {
+			resp1 += " @" + _user[*it].getNickName();
+      }
+		else
+			resp1 += " " + _user[*it].getNickName();
 	}
 	std::string resp2 = response("353", resp1);
+   std::string resp3 = response("366", chan_name + " :End of /NAMES list");
 	send(_data.it->first , sendMessage("JOIN", "", chan_name).c_str(), sendMessage("JOIN", "", chan_name).length(), 0);
+   send(_data.it->first , resp2.c_str(), resp2.length(), 0);
+   send(_data.it->first, resp3.c_str(), resp3.length(), 0);
+   _chan[chan_name].sendAll(resp2);
+   _chan[chan_name].sendAll(resp3);
 }
 
 void Server::join(std::vector<std::string> &args)
@@ -252,7 +261,8 @@ void Server::parseMsg()
 	   &Server::oper,
 	   &Server::privMsg,
       &Server::quit,
-      &Server::notice
+      &Server::notice,
+      &Server::kill
    };
 
    std::string _cmd[] =
@@ -261,7 +271,8 @@ void Server::parseMsg()
 	   "OPER",
 	   "PRIVMSG",
       "QUIT",
-      "NOTICE"
+      "NOTICE",
+      "KILL"
    };
 
    _data.buffer[_data.ret_read] = 0;
@@ -290,11 +301,11 @@ void Server::parseMsg()
             return;
          }
       }
-      for (int i = 0; i < 5; i++)
+      for (int i = 0; i < 6; i++)
       {
          if (_user[_data.it->first].getUserName().empty())
          {
-            std::string resp(response("451", ":You have not registered"));
+            std::string resp(response("451", ":You have not registered batard"));
             send(_data.it->first , resp.c_str(), resp.length(), 0);
             return;
          }
@@ -403,10 +414,9 @@ void Server::privMsg(std::vector<std::string> &args)
 void Server::quit(std::vector<std::string> &args)
 {
    std::string resp;
+   std::string message;
    if (args.size() > 1)
-      resp += " " + args[1];
-   std::string message = response("001", " :has quit IRC" + resp);
-   //sendMessage("QUIT", *it, " :has quit IRC")
+      message += " " + args[1];
    for (std::map<std::string, Channel>::iterator it =  _chan.begin(); it != _chan.end(); it++)
    {
       std::list<int>::iterator itt = std::find(it->second.getUser().begin(), it->second.getUser().end(), _data.it->first);
@@ -415,7 +425,7 @@ void Server::quit(std::vector<std::string> &args)
          for (std::list<int>::iterator ite = it->second.getUser().begin(); ite != it->second.getUser().end(); ite++)
          {
             if (ite != itt)
-               send(*ite, message.c_str(), message.length(), 0);
+               send(*ite , sendMessage("QUIT", it->first, message).c_str(), sendMessage("QUIT", it->first, message).length(), 0);
          }
          it->second.removeUser(*itt);
       }
@@ -435,14 +445,15 @@ void Server::kill(std::vector<std::string> &args)
       resp = response("461", "KILL :Not enough parameters");
    else if (fd == - 1)
       resp = response("401", args[1] + " :No such nick");
-   if (resp.empty())
+   if (!resp.empty())
       send(_data.it->first, resp.c_str(), resp.length(), 0);
    else
    {
+      send(fd , sendMessage("KILL", args[1], args[2]).c_str(), sendMessage("KILL", args[1], args[2]).length(), 0);
       for (std::map<std::string, Channel>::iterator it =  _chan.begin(); it != _chan.end(); it++)
-         it->second.removeUser(_data.it->first);
-      close(_data.it->first);
-      FD_CLR(_data.it->first, &_data.m_set);
+         it->second.removeUser(fd);
+      close(fd);
+      FD_CLR(fd, &_data.m_set);
    }
 }
 

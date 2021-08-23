@@ -110,13 +110,13 @@ int Channel::addUser(int fd)
 int Channel::addOper(int fd)
 {
     std::list<int>::iterator it;
-    for (it = _userFd.begin(); it != _operFd.end(); it++)
+    for (it = _operFd.begin(); it != _operFd.end(); it++)
     {
         if (*it == fd)
             return 1;
     }
-     _operFd.push_back(fd);
-     return 0;
+    _operFd.push_back(fd);
+    return 0;
 }
 
 std::string Channel::getName(){ return _name; }
