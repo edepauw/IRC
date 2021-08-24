@@ -209,3 +209,14 @@ bool Server::isChan(std::string chan)
    }
    return (false);
 }
+
+bool Server::isUser(std::string user)
+{
+   std::map<int, User>::iterator it;
+   for(it = _user.begin(); it != _user.end(); it++)
+   {
+      if (user == it->second.getNickName())
+         return (true);      
+   }
+   return (false);
+}

@@ -140,13 +140,15 @@ void		Channel::setBan(int fd)
 		std::cout << fd << " : is already ban" << std::endl;
 }
 
-void        Channel::sendAll(std::string str)
+void        Channel::sendAll(int man, std::string str)
 {
     int fd;
     std::list<int>::iterator it;
     for (it = _userFd.begin(); it != _userFd.end(); it++)
     {
+
         fd = *it;
-        send(fd , str.c_str(), str.length(), 0);
+        if (fd != man)
+            send(fd , str.c_str(), str.length(), 0);
     }
 }

@@ -24,7 +24,7 @@ class Channel{
 	void		setBan(int fd);
 	bool		isFd(int fd);
 	bool		isOpe(int fd);
-	void        sendAll(std::string str);
+	void        sendAll(int man, std::string str);
 
 	std::list<int> & getUser();
 	std::list<int> & getOper();

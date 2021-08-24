@@ -62,6 +62,8 @@ void Server::nick(std::vector<std::string> &args)
 
    if (args.size() == 1)
       resp = response("431", ":No nickname given");
+   else if (args[1][0] == '&' || args[1][0] == '#' || args[1][0] == '@')
+      resp = response( "432", ":Erroneus nickname");
    else
    {
       for (std::map<int, User>::iterator it = _user.begin(); it != _user.end(); ++it)
@@ -177,7 +179,7 @@ void Server::createOrJoinWithPass(std::string chan_name, std::string password)
     	  	else
     	  	   std::cout << "Join channel : " << chan_name << std::endl;
 			
-         _chan[chan_name].sendAll(sendMessage("JOIN", _chan[chan_name].getName(), ""));
+         _chan[chan_name].sendAll(0, sendMessage("JOIN", _chan[chan_name].getName(), ""));
          printUserAndTopic(chan_name);
     	}
    }
@@ -204,8 +206,8 @@ void	Server::printUserAndTopic(std::string chan_name){
 	send(_data.it->first , sendMessage("JOIN", "", chan_name).c_str(), sendMessage("JOIN", "", chan_name).length(), 0);
   //send(_data.it->first , resp2.c_str(), resp2.length(), 0);
   //send(_data.it->first, resp3.c_str(), resp3.length(), 0);
-   _chan[chan_name].sendAll(resp2);
-   _chan[chan_name].sendAll(resp3);
+   _chan[chan_name].sendAll(0, resp2);
+   _chan[chan_name].sendAll(0, resp3);
 }
 
 void Server::join(std::vector<std::string> &args)
@@ -303,11 +305,11 @@ void Server::parseMsg()
             return;
          }
       }
-      for (int i = 0; i < 6; i++)
+      for (int i = 0; i < 7; i++)
       {
          if (_user[_data.it->first].getUserName().empty())
          {
-            std::string resp(response("451", ":You have not registered batard"));
+            std::string resp(response("451", ":You have not registered"));
             send(_data.it->first , resp.c_str(), resp.length(), 0);
             return;
          }
@@ -344,21 +346,59 @@ void Server::oper(std::vector<std::string> &args){
 
 void Server::setBanFromServ(std::string channel, int fd){ _chan[channel].setBan(fd); }
 
-std::vector<std::string> cutPrivMsg(std::string str)
+std::vector<std::string> Server::cutPrivMsg(std::string str)
 {
    std::vector<std::string> temp;
+   std::string resp;
+   std::string elem;
    int pos = 0;
-   if(str.find(',') == std::string::npos && str.length() > 1)
+   if (str.find(',') == std::string::npos)
    {
+      if ( str.empty() || (!isChan(str) && !isUser(str)))
+      {
+         resp = response("401", elem + ":No such nick/channel");
+         send(_data.it->first, resp.c_str(), resp.length(), 0);
+         return (temp);
+      }
       temp.push_back(str);
       return (temp);
    }
    while((pos = str.find(',')) != std::string::npos)
    {
-      temp.push_back((str.substr(0, pos)));
+      elem = str.substr(0, pos);
+      if (!isChan(elem) && !isUser(elem))
+      {
+         resp = response("401", elem + ":No such nick/channel");
+         send(_data.it->first, resp.c_str(), resp.length(), 0);
+         temp.clear();
+         return (temp);
+      }
+      if (std::find(temp.begin(), temp.end(), elem) != temp.end())
+      {   
+         resp = response("407", elem + ":Duplicate recipients. No message delivered");
+         send(_data.it->first, resp.c_str(), resp.length(), 0);
+         temp.clear();
+         return (temp);
+      }
+      temp.push_back(elem);
       str.erase(0, pos + 1);
    }
-   temp.push_back((str.substr(0, pos)));
+   elem = str.substr(0, pos);
+   if (!isChan(elem) && !isUser(elem))
+   {
+      resp = response("401", elem + ":No such nick/channel");
+      send(_data.it->first, resp.c_str(), resp.length(), 0);
+      temp.clear();
+      return (temp);
+   }
+   if (std::find(temp.begin(), temp.end(), elem) != temp.end())
+   {   
+      resp = response("407", elem + ":Duplicate recipients. No message delivered");
+      send(_data.it->first, resp.c_str(), resp.length(), 0);
+      temp.clear();
+      return (temp);
+   }
+   temp.push_back(elem);
    str.erase(0, pos);
    return (temp);
 }
@@ -388,11 +428,18 @@ void Server::privMsg(std::vector<std::string> &args)
    std::vector<std::string>::iterator it;
    std::string msg;
    std::string cur;
+   std::string resp;
    //x = cutby ',' args[1]
    all = cutPrivMsg(args[1]);
-   if (args.size() < 2) // ERRO
+   if (all.empty())
       return;
    msg = args[2];
+   if (msg.empty())
+   {
+      resp = response("412", ":No text to send");
+      send(_data.it->first, resp.c_str(), resp.length(), 0);
+      return;
+   }
    for (it = all.begin(); it != all.end(); it++)
    {
       cur = *it;
@@ -404,7 +451,16 @@ void Server::privMsg(std::vector<std::string> &args)
    for (it = chan.begin(); it != chan.end(); it++)
    {
       if (_chan.find(*it) != _chan.end())
-         _chan.find(*it)->second.sendAll(sendMessage("PRIVMSG", _chan.find(*it)->first, msg));
+      {
+         if (_chan[*it].isFd(_data.it->first))
+            _chan.find(*it)->second.sendAll(_data.it->first, sendMessage("PRIVMSG", _chan.find(*it)->first, msg));
+         else
+         {
+            resp = response("404", *it + ":Cannot send to channel");
+            send(_data.it->first, resp.c_str(), resp.length(), 0);
+            return;
+         }
+      }
    }
    for (it = user.begin(); it != user.end(); it++)
    {
@@ -415,7 +471,6 @@ void Server::privMsg(std::vector<std::string> &args)
 
 void Server::quit(std::vector<std::string> &args)
 {
-   std::string resp;
    std::string message;
    if (args.size() > 1)
       message += " " + args[1];
@@ -440,6 +495,7 @@ void Server::kill(std::vector<std::string> &args)
 {
    int fd = getFd_ByName(args[1]);
    std::string resp;
+   std::string message;
    if (_user[_data.it->first].isOper() == false)
       //sendMessage("PRIVMSG", *it, msg).c_str(), sendMessage("PRIVMSG", *it, msg).length(), 0);
       resp = response("481", ":Permission Denied- You're not an IRC operator");
@@ -451,9 +507,24 @@ void Server::kill(std::vector<std::string> &args)
       send(_data.it->first, resp.c_str(), resp.length(), 0);
    else
    {
-      send(fd , sendMessage("KILL", args[1], args[2]).c_str(), sendMessage("KILL", args[1], args[2]).length(), 0);
+      if (args.size() > 2)
+         message += " " + args[2];
       for (std::map<std::string, Channel>::iterator it =  _chan.begin(); it != _chan.end(); it++)
-         it->second.removeUser(fd);
+      {
+         std::list<int>::iterator itt = std::find(it->second.getUser().begin(), it->second.getUser().end(), fd);
+         if (itt != it->second.getUser().end())
+         {
+            for (std::list<int>::iterator ite = it->second.getUser().begin(); ite != it->second.getUser().end(); ite++)
+            {
+               if (ite != itt)
+               {
+                  send(*ite , sendMessage("KILL", _user[fd].getNickName(), message).c_str(), sendMessage("KILL", _user[fd].getNickName(), message).length(), 0);
+                  //send(*ite , sendMessage("KILL", args[1], args[2]).c_str(), sendMessage("KILL", args[1], args[2]).length(), 0);
+               }
+            }
+            it->second.removeUser(*itt);
+         }
+      }
       close(fd);
       FD_CLR(fd, &_data.m_set);
    }
@@ -462,28 +533,38 @@ void Server::kill(std::vector<std::string> &args)
 void Server::kick(std::vector<std::string> &args)
 {
    std::string resp;
+   std::string message;
+   if (args.size() > 3)
+      message += " " + args[3];
    if (args.size() < 3)
    {
       resp = response("461", "KICK :Not enough parameters");
       send(_data.it->first, resp.c_str(), resp.length(), 0);
+      return;
+   }
+   if(!isChan(args[1]))
+   {
+      resp = response("403", args[1] + " :No such channel");
+      send(_data.it->first, resp.c_str(), resp.length(), 0);
+      return;
+   }
+   if (!_chan[args[1]].isFd(_data.it->first))
+   {
+      resp = response("442" , args[1] + " :You're not on that channel");
+      send(_data.it->first, resp.c_str(), resp.length(), 0);
+      return;
+   }
+   if(_chan[args[1]].isOpe(_data.it->first))
+   {
+      _chan[args[1]].removeUser(getFd_ByName(args[2]));
+      _chan[args[1]].sendAll(0, sendMessage("KICK", args[1] + " " + args[2], message));
    }
    else
    {
-      if(isChan(args[1]))
-      {
-         if(_chan[args[1]].isOpe(_data.it->first))
-         {
-            _chan[args[1]].removeUser(getFd_ByName(args[2]));
-            resp = response("", "you've been kicked from " + args[1]);
-            send(getFd_ByName(args[2]), resp.c_str(), resp.length(), 0);
-         }
-      }
-      else
-      {
-         resp = response("403", args[1] + " :No such channel");
-         send(_data.it->first, resp.c_str(), resp.length(), 0);
-      }
+      resp = response("482", args[1] + " :You're not channel operator");
+      send(_data.it->first, resp.c_str(), resp.length(), 0);
    }
+
 }
 
 

@@ -71,6 +71,7 @@ class Server
         void addUser(int fd);
         void init(void);
         bool isChan(std::string chan);
+        bool isUser(std::string user);
         void loop(void);
         std::string response(std::string num, std::string resp);
         std::string sendMessage(std::string cmd, std::string dest, std::string msg);
@@ -78,6 +79,7 @@ class Server
         // Command
         std::vector<std::string> cutMsg(std::string cmd);
         void parseMsg(void);
+        std::vector<std::string> cutPrivMsg(std::string str);
         void pass(std::vector<std::string> &args);
         void nick(std::vector<std::string> &args);
         void createOrJoinWithPass(std::string chan_name, std::string password);
