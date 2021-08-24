@@ -202,8 +202,8 @@ void	Server::printUserAndTopic(std::string chan_name){
 	std::string resp2 = response("353", resp1);
    std::string resp3 = response("366", chan_name + " :End of /NAMES list");
 	send(_data.it->first , sendMessage("JOIN", "", chan_name).c_str(), sendMessage("JOIN", "", chan_name).length(), 0);
-   send(_data.it->first , resp2.c_str(), resp2.length(), 0);
-   send(_data.it->first, resp3.c_str(), resp3.length(), 0);
+  //send(_data.it->first , resp2.c_str(), resp2.length(), 0);
+  //send(_data.it->first, resp3.c_str(), resp3.length(), 0);
    _chan[chan_name].sendAll(resp2);
    _chan[chan_name].sendAll(resp3);
 }
@@ -262,6 +262,7 @@ void Server::parseMsg()
 	   &Server::privMsg,
       &Server::quit,
       &Server::notice,
+      &Server::kick,
       &Server::kill
    };
 
@@ -272,6 +273,7 @@ void Server::parseMsg()
 	   "PRIVMSG",
       "QUIT",
       "NOTICE",
+      "KICK",
       "KILL"
    };
 
@@ -457,31 +459,37 @@ void Server::kill(std::vector<std::string> &args)
    }
 }
 
+void Server::kick(std::vector<std::string> &args)
+{
+   std::string resp;
+   if (args.size() < 3)
+   {
+      resp = response("461", "KICK :Not enough parameters");
+      send(_data.it->first, resp.c_str(), resp.length(), 0);
+   }
+   else
+   {
+      if(isChan(args[1]))
+      {
+         if(_chan[args[1]].isOpe(_data.it->first))
+         {
+            _chan[args[1]].removeUser(getFd_ByName(args[2]));
+            resp = response("", "you've been kicked from " + args[1]);
+            send(getFd_ByName(args[2]), resp.c_str(), resp.length(), 0);
+         }
+      }
+      else
+      {
+         resp = response("403", args[1] + " :No such channel");
+         send(_data.it->first, resp.c_str(), resp.length(), 0);
+      }
+   }
+}
+
+
 void Server::notice(std::vector<std::string> &args)
 {
    if (args.size() > 2)
       if (getFd_ByName(args[1]) > 0)
          send(getFd_ByName(args[1]) , sendMessage("NOTICE", args[1], args[2]).c_str(), sendMessage("PRIVMSG", args[1], args[2]).length(), 0);
 }
-
-/*void Server::kick(std::vector<std::string> &args)
-{
-   std::string resp;
-   int fdName = getFd_ByName(args[1]);
-   std::string chan = args[2];
-
-   if (args.size() < 3)
-      resp = response("461", "KICK :Not enough parameters");
-   else if (fd == - 1)
-      resp = response("401", args[1] + " :No such channel");
-   
-              403 ERR_NOSUCHCHANNEL
-"<nom de canal> :No such channel"
-                            
-          442 ERR_NOTONCHANNEL
-"<canal> :You're not on that channel"
-
-482 ERR_CHANOPRIVSNEEDED
-"<canal> :You're not channel operator"
-
-}*/

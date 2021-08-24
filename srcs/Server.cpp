@@ -198,3 +198,14 @@ int	Server::getFd_ByName(std::string name)
 	}
 	return (-1);
 }
+
+bool Server::isChan(std::string chan)
+{
+   std::map<std::string, Channel>::iterator it;
+   for(it = _chan.begin(); it != _chan.end(); it++)
+   {
+      if (chan == it->first)
+         return (true);      
+   }
+   return (false);
+}

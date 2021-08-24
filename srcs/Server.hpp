@@ -70,6 +70,7 @@ class Server
         // Method
         void addUser(int fd);
         void init(void);
+        bool isChan(std::string chan);
         void loop(void);
         std::string response(std::string num, std::string resp);
         std::string sendMessage(std::string cmd, std::string dest, std::string msg);
